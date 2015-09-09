@@ -1,54 +1,67 @@
 package com.asda.zombiex;
 
+import com.asda.zombiex.handlers.BoundedCamera;
 import com.asda.zombiex.handlers.Content;
+import com.asda.zombiex.handlers.GameStateManager;
 import com.asda.zombiex.handlers.InputController;
 import com.asda.zombiex.handlers.InputKeys;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
-import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 public class Game extends ApplicationAdapter {
-	public static int V_WIDTH = 320;
-	public static int V_HEIGHT = 240;
-	public static final int SCALE = 2;
+    public static int V_WIDTH = 320;
+    public static int V_HEIGHT = 240;
+    public static final int SCALE = 2;
 
-	private SpriteBatch sb;
-	private Texture img;
+    private SpriteBatch sb;
+    private BoundedCamera cam;
+    private OrthographicCamera hudCam;
 
-	public static Content res;
-	
-	@Override
-	public void create () {
-		V_WIDTH = (V_HEIGHT * Gdx.graphics.getWidth()) / Gdx.graphics.getHeight();
+    private GameStateManager gsm;
+    public static Content res;
 
-		Gdx.input.setInputProcessor(new InputController());
+    @Override
+    public void create() {
+        V_WIDTH = (V_HEIGHT * Gdx.graphics.getWidth()) / Gdx.graphics.getHeight();
 
-		res = new Content();
-		res.loadTexture("images/badlogic.jpg", "badlogic");
+        Gdx.input.setInputProcessor(new InputController());
+
+        res = new Content();
+        res.loadTexture("images/badlogic.jpg", "badlogic");
+
+        cam = new BoundedCamera();
+        cam.setToOrtho(false, V_WIDTH, V_HEIGHT);
+        hudCam = new OrthographicCamera();
+        hudCam.setToOrtho(false, V_WIDTH, V_HEIGHT);
 
         sb = new SpriteBatch();
-		img = res.getTexture("badlogic");
-	}
 
-	@Override
-	public void render () {
-		Gdx.gl.glClearColor(1, 0, 0, 1);
-		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        sb.begin();
-        sb.draw(img, 0, 0);
-        sb.end();
+        gsm = new GameStateManager(this);
+    }
+
+    @Override
+    public void render() {
+        gsm.update(Gdx.graphics.getDeltaTime());
+        gsm.render();
         InputKeys.update();
-	}
+    }
 
-	@Override
-	public void dispose() {
-		res.removeAll();
-	}
+    @Override
+    public void dispose() {
+        res.removeAll();
+    }
 
     public SpriteBatch getSpriteBatch() {
         return sb;
+    }
+
+    public BoundedCamera getCamera() {
+        return cam;
+    }
+
+    public OrthographicCamera getHudCamera() {
+        return hudCam;
     }
 }
