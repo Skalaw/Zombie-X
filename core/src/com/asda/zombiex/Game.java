@@ -14,6 +14,7 @@ public class Game extends ApplicationAdapter {
     public static int V_WIDTH = 320;
     public static int V_HEIGHT = 240;
     public static final int SCALE = 2;
+    public static final float STEP = 1 / 60f;
 
     private SpriteBatch sb;
     private BoundedCamera cam;
@@ -28,8 +29,7 @@ public class Game extends ApplicationAdapter {
 
         Gdx.input.setInputProcessor(new InputController());
 
-        res = new Content();
-        res.loadTexture("images/badlogic.jpg", "badlogic");
+        initResources();
 
         cam = new BoundedCamera();
         cam.setToOrtho(false, V_WIDTH, V_HEIGHT);
@@ -39,6 +39,12 @@ public class Game extends ApplicationAdapter {
         sb = new SpriteBatch();
 
         gsm = new GameStateManager(this);
+    }
+
+    private void initResources() {
+        res = new Content();
+        res.loadTexture("images/badlogic.jpg", "badlogic");
+        res.loadTexture("images/jenkins.png", "jenkins");
     }
 
     @Override

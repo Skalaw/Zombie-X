@@ -33,8 +33,8 @@ public class GameStateManager {
     }
 
     private GameState getState(int state) {
-        if(state == MENU) return new Menu(this);
-        if(state == PLAY) return new Play(this);
+        if (state == MENU) return new Menu(this);
+        if (state == PLAY) return new Play(this);
         return null;
     }
 
