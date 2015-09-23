@@ -5,7 +5,7 @@ import com.badlogic.gdx.InputAdapter;
 /**
  * @author Skala
  */
-public class InputController extends InputAdapter {
+public class InputController extends InputAdapter { // TODO: need second touch
 
     @Override
     public boolean mouseMoved(int x, int y) {

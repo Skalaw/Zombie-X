@@ -11,8 +11,8 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 public class Game extends ApplicationAdapter {
-    public static int V_WIDTH = 320;
-    public static int V_HEIGHT = 240;
+    public static int V_WIDTH = 480;
+    public static int V_HEIGHT = 360;
     public static final int SCALE = 2;
     public static final float STEP = 1 / 60f;
 

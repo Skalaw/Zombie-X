@@ -3,9 +3,24 @@
  <tileset firstgid="1" name="block" tilewidth="25" tileheight="25">
   <image source="block.png" width="100" height="25"/>
  </tileset>
- <layer name="Tile Layer 1" width="40" height="30">
+ <layer name="red" width="40" height="30">
   <data encoding="base64" compression="zlib">
-   eJztlEsOwCAIRLX1/mfutjGAAzjEhYtJfwEeA/ZprT1XV4B6YZ1ZUb4u5GSwIuxS/S5ctZiIH1o96XlVW4uJeK19R/gkfy3/vPtrsa/80nzTPFntB3I2LI885wPxj3WOUD70vkrSfLU98PK9xX0w+Ebwm8WIsqJ8M8dQ3u8WOt8/SwVXhjHKFt11z4wzvmX4rNgds83+JzzxXsZV/xX9VeRmMO7wjpGLkW9nXhbbnD9Sh80WYc30w2Q9genqbH1aSAlM
+   eJzt07ENAAAIwzD4/2lWEKxsttQPmgjYsg2++BnMDvQAAAC3AqdQAAw=
+  </data>
+ </layer>
+ <layer name="green" width="40" height="30">
+  <data encoding="base64" compression="zlib">
+   eJzt1sEJAAAIxLDD/Yd2AcGvSALdoQkAcFEtAQDA5ONHNtAAACE=
+  </data>
+ </layer>
+ <layer name="yellow" width="40" height="30">
+  <data encoding="base64" compression="zlib">
+   eJztzLEJAAAIBLEH99/ZFbRTSODaSwCAz2rY5gUAAJc0mS8AJQ==
+  </data>
+ </layer>
+ <layer name="blue" width="40" height="30">
+  <data encoding="base64" compression="zlib">
+   eJztw0EJAAAIBLB72D+zBS6A4AZLAIBPpgQAgMsW6XAAFQ==
   </data>
  </layer>
 </map>
