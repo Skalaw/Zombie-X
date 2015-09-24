@@ -28,20 +28,4 @@ public class InputKeys {
     public static boolean isReleased() {
         return !down && pdown;
     }
-
-    public static boolean isTouchedLeftScreen() {
-        return x < Gdx.graphics.getWidth() * SIZE_EDGE_FIELD_SCREEN_TOUCH;
-    }
-
-    public static boolean isTouchedRightScreen() {
-        return x > Gdx.graphics.getWidth() * (1f - SIZE_EDGE_FIELD_SCREEN_TOUCH);
-    }
-
-    public static boolean isTouchedTopScreen() {
-        return y < Gdx.graphics.getHeight() * SIZE_EDGE_FIELD_SCREEN_TOUCH;
-    }
-
-    public static boolean isTouchedBottomScreen() {
-        return y > Gdx.graphics.getHeight() * (1f - SIZE_EDGE_FIELD_SCREEN_TOUCH);
-    }
 }

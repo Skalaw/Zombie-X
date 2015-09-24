@@ -1,11 +1,11 @@
 package com.asda.zombiex.states;
 
 import com.asda.zombiex.Game;
+import com.asda.zombiex.entities.ControllerPlayer;
 import com.asda.zombiex.entities.Player;
 import com.asda.zombiex.handlers.B2DVars;
 import com.asda.zombiex.handlers.GameContactListener;
 import com.asda.zombiex.handlers.GameStateManager;
-import com.asda.zombiex.handlers.InputKeys;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.maps.tiled.TiledMap;
@@ -27,8 +27,6 @@ import static com.asda.zombiex.handlers.B2DVars.PPM;
  * @author Skala
  */
 public class Play extends GameState {
-    final static float MAX_VELOCITY_X = 4f;
-
     private World world;
     private GameContactListener cl;
 
@@ -38,6 +36,7 @@ public class Play extends GameState {
     private float tileSize;
     private OrthogonalTiledMapRenderer mapRenderer;
 
+    private ControllerPlayer controllerPlayer;
     private Player player;
 
     public Play(GameStateManager gsm) {
@@ -46,6 +45,7 @@ public class Play extends GameState {
         createWorld();
         createMap();
         createPlayer();
+        controllerPlayer = new ControllerPlayer(player, hudCam);
     }
 
     private void createWorld() {
@@ -135,47 +135,7 @@ public class Play extends GameState {
 
     @Override
     public void handleInput() {
-        Body playerBody = player.getBody();
-        Vector2 vel = playerBody.getLinearVelocity();
-
-        // control max speed horizontally
-        if (Math.abs(vel.x) > MAX_VELOCITY_X) {
-            vel.x = Math.signum(vel.x) * MAX_VELOCITY_X;
-            playerBody.setLinearVelocity(vel.x, vel.y);
-        }
-
-        // release slowly when idle control horizontally
-        if (!InputKeys.isPressed() || !InputKeys.isTouchedLeftScreen() || !InputKeys.isTouchedRightScreen()) {
-            playerBody.setLinearVelocity(vel.x * 0.9f, vel.y);
-        }
-
-        // set moving left or right
-        if (InputKeys.isDown()) {
-            float posX = playerBody.getPosition().x;
-            float posY = playerBody.getPosition().y;
-
-            if (InputKeys.isTouchedLeftScreen()) {
-                if (vel.x > -MAX_VELOCITY_X) {
-                    playerBody.applyLinearImpulse(-0.5f, 0, posX, posY, true);
-                }
-            } else if (InputKeys.isTouchedRightScreen()) {
-                if (vel.x < MAX_VELOCITY_X) {
-                    playerBody.applyLinearImpulse(0.5f, 0, posX, posY, true);
-                }
-            }
-            playerBody.setTransform(posX, posY, 0);
-        }
-
-        // jump to up and "down"
-        if (InputKeys.isPressed()) {
-            if (InputKeys.isTouchedTopScreen()) {
-                playerBody.setLinearVelocity(vel.x, 0);
-                playerBody.applyForceToCenter(0, 175, true);
-            } else if (InputKeys.isTouchedBottomScreen()) {
-                playerBody.setLinearVelocity(vel.x, 0);
-                playerBody.applyForceToCenter(0, -175, true);
-            }
-        }
+        controllerPlayer.handleInput();
     }
 
     @Override
@@ -197,6 +157,10 @@ public class Play extends GameState {
 
         mapRenderer.setView(cam);
         mapRenderer.render();
+
+        // draw mControllerPlayer
+        sb.setProjectionMatrix(hudCam.combined);
+        controllerPlayer.render(sb);
 
         // draw player
         sb.setProjectionMatrix(cam.combined);
