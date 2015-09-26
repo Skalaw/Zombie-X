@@ -5,36 +5,53 @@ import com.badlogic.gdx.InputAdapter;
 /**
  * @author Skala
  */
-public class InputController extends InputAdapter { // TODO: need second touch
+public class InputController extends InputAdapter {
+    public static InputKeys[] inputKeys;
 
-    @Override
-    public boolean mouseMoved(int x, int y) {
-        InputKeys.x = x;
-        InputKeys.y = y;
-        return true;
+    static {
+        inputKeys = new InputKeys[2];
+        inputKeys[0] = new InputKeys();
+        inputKeys[1] = new InputKeys();
+    }
+
+    public static void update() {
+        inputKeys[0].update();
+        inputKeys[1].update();
     }
 
     @Override
     public boolean touchDragged(int x, int y, int pointer) {
-        InputKeys.x = x;
-        InputKeys.y = y;
-        InputKeys.down = true;
+        if (pointer > 1) {
+            return false;
+        }
+
+        inputKeys[pointer].x = x;
+        inputKeys[pointer].y = y;
+        inputKeys[pointer].down = true;
         return true;
     }
 
     @Override
     public boolean touchDown(int x, int y, int pointer, int button) {
-        InputKeys.x = x;
-        InputKeys.y = y;
-        InputKeys.down = true;
+        if (pointer > 1) {
+            return false;
+        }
+
+        inputKeys[pointer].x = x;
+        inputKeys[pointer].y = y;
+        inputKeys[pointer].down = true;
         return true;
     }
 
     @Override
     public boolean touchUp(int x, int y, int pointer, int button) {
-        InputKeys.x = x;
-        InputKeys.y = y;
-        InputKeys.down = false;
+        if (pointer > 1) {
+            return false;
+        }
+
+        inputKeys[pointer].x = x;
+        inputKeys[pointer].y = y;
+        inputKeys[pointer].down = false;
         return true;
     }
 

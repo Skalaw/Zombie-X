@@ -45,7 +45,7 @@ public class Play extends GameState {
         createWorld();
         createMap();
         createPlayer();
-        controllerPlayer = new ControllerPlayer(player, hudCam);
+        controllerPlayer = new ControllerPlayer(hudCam);
     }
 
     private void createWorld() {
@@ -108,7 +108,7 @@ public class Play extends GameState {
 
     private void createPlayer() {
         BodyDef bdef = new BodyDef();
-        bdef.position.set(50 / PPM, tileMapHeight * tileSize / PPM);
+        bdef.position.set(50 / PPM, (tileMapHeight - 4) * tileSize / PPM);
         bdef.type = BodyDef.BodyType.DynamicBody;
         bdef.fixedRotation = true;
 
@@ -135,7 +135,18 @@ public class Play extends GameState {
 
     @Override
     public void handleInput() {
-        controllerPlayer.handleInput();
+        if (!controllerPlayer.isAnalogDown()) {
+            player.braking();
+        }
+
+        float intensity = controllerPlayer.getAnalogIntensity();
+        if (intensity != 0f) {
+            player.moving(intensity);
+        }
+
+        if (controllerPlayer.isButtonJumpClicked()) {
+            player.jump();
+        }
     }
 
     @Override

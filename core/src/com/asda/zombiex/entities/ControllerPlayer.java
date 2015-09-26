@@ -1,23 +1,18 @@
 package com.asda.zombiex.entities;
 
 import com.asda.zombiex.Game;
+import com.asda.zombiex.handlers.InputController;
 import com.asda.zombiex.handlers.InputKeys;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.physics.box2d.Body;
 
 /**
  * @author Skala
  */
 public class ControllerPlayer {
-    final static float MAX_VELOCITY_X = 4f;
-
-    private Player player;
-    private Body playerBody;
     private OrthographicCamera cam;
 
     // TODO: to improvement change Texture to TextureRegion
@@ -27,9 +22,7 @@ public class ControllerPlayer {
 
     private int buttonJumpX; // TODO: create class button
 
-    public ControllerPlayer(Player player, OrthographicCamera cam) {
-        this.player = player;
-        playerBody = player.getBody();
+    public ControllerPlayer(OrthographicCamera cam) {
         this.cam = cam;
 
         analog = Game.res.getTexture("analog");
@@ -37,51 +30,6 @@ public class ControllerPlayer {
         buttonJumpX = Game.V_WIDTH - buttonJump.getWidth();
 
         vec = new Vector3();
-    }
-
-    public void handleInput() {
-        vec.set(InputKeys.x, InputKeys.y, 0);
-        cam.unproject(vec);
-
-        Vector2 vel = playerBody.getLinearVelocity();
-
-        // control max speed horizontally
-        if (Math.abs(vel.x) > MAX_VELOCITY_X) {
-            vel.x = Math.signum(vel.x) * MAX_VELOCITY_X;
-            playerBody.setLinearVelocity(vel.x, vel.y);
-        }
-
-        // release slowly when idle control horizontally
-        if (!InputKeys.isPressed() || !(vec.y > 0 && vec.y < analog.getHeight() && vec.x > 0 && vec.x <= analog.getWidth())) {
-            playerBody.setLinearVelocity(vel.x * 0.9f, vel.y);
-        }
-
-        // set moving left or right
-        if (InputKeys.isDown()) {
-            float posX = playerBody.getPosition().x;
-            float posY = playerBody.getPosition().y;
-
-            if (vec.y > 0 && vec.y < analog.getHeight()) {
-                if (vec.x > 0 && vec.x <= analog.getWidth() / 2) {
-                    if (vel.x > -MAX_VELOCITY_X) {
-                        playerBody.applyLinearImpulse(-0.3f, 0, posX, posY, true);
-                    }
-                } else if (vec.x > analog.getWidth() / 2 && vec.x < analog.getWidth()) {
-                    if (vel.x < MAX_VELOCITY_X) {
-                        playerBody.applyLinearImpulse(0.3f, 0, posX, posY, true);
-                    }
-                }
-            }
-        }
-
-        // jump
-        if (InputKeys.isPressed()) {
-            if (vec.x > buttonJumpX && vec.x < buttonJumpX + buttonJump.getWidth()
-                    && vec.y > 0 && vec.y < buttonJump.getHeight()) {
-                playerBody.setLinearVelocity(vel.x, 0);
-                playerBody.applyForceToCenter(0, 175, true);
-            }
-        }
     }
 
     public void render(SpriteBatch sb) {
@@ -94,5 +42,70 @@ public class ControllerPlayer {
         sb.end();
 
         sb.setColor(c.r, c.g, c.b, 1f);
+    }
+
+    public boolean isButtonJumpClicked() {
+        return isButtonJumpClicked(InputController.inputKeys[0]) || isButtonJumpClicked(InputController.inputKeys[1]);
+    }
+
+    private boolean isButtonJumpClicked(InputKeys inputKeys) {
+        if (inputKeys.isPressed()) {
+            vec.set(inputKeys.x, inputKeys.y, 0);
+            cam.unproject(vec);
+            if (vec.x > buttonJumpX && vec.x < buttonJumpX + buttonJump.getWidth()
+                    && vec.y > 0 && vec.y < buttonJump.getHeight()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public boolean isAnalogDown() {
+        boolean firstPointer = isAnalogDown(InputController.inputKeys[0]);
+        boolean secondPointer = isAnalogDown(InputController.inputKeys[1]);
+
+        return !(firstPointer && secondPointer);
+    }
+
+    private boolean isAnalogDown(InputKeys inputKeys) {
+        vec.set(inputKeys.x, inputKeys.y, 0);
+        cam.unproject(vec);
+        return !inputKeys.isPressed() || !(vec.y > 0 && vec.y < analog.getHeight() && vec.x > 0 && vec.x <= analog.getWidth());
+    }
+
+    /**
+     * @return Intensity in percentage
+     */
+
+    public float getAnalogIntensity() {
+        float intensity1 = getAnalogIntensity(InputController.inputKeys[0]);
+        float intensity2 = getAnalogIntensity(InputController.inputKeys[1]);
+
+        return Math.abs(intensity1) > Math.abs(intensity2) ? intensity1 : intensity2;
+    }
+
+    private float getAnalogIntensity(InputKeys inputKeys) {
+        if (inputKeys.isDown()) {
+            vec.set(inputKeys.x, inputKeys.y, 0);
+            cam.unproject(vec);
+
+            if (vec.y > 0 && vec.y < analog.getHeight()) {
+                if (vec.x > 0 && vec.x <= analog.getWidth() / 2) {
+                    return -(1 - calcPercentValue(0, analog.getWidth() / 2, vec.x));
+                } else if (vec.x > analog.getWidth() / 2 && vec.x < analog.getWidth()) {
+                    return calcPercentValue(analog.getWidth() / 2, analog.getWidth(), vec.x);
+                }
+            }
+        }
+
+        return 0f;
+    }
+
+    private float calcPercentValue(float left, float right, float value) {
+        right -= left;
+        value -= left;
+
+        return value / right;
     }
 }

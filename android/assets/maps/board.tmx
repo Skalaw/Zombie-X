@@ -5,7 +5,7 @@
  </tileset>
  <layer name="red" width="40" height="30">
   <data encoding="base64" compression="zlib">
-   eJzt1jEKACAMA8D2/592tSh0qi53kB8kkAg45RaYomdQd2APAAD8cvulXV5arjgAGQ==
+   eJzt16ENAEAIA0DYf+mXKHBPEHdJF6ho0gjgh2xC0QvYCQAAbug+7JRND9hoABw=
   </data>
  </layer>
  <layer name="green" width="40" height="30">
@@ -15,7 +15,7 @@
  </layer>
  <layer name="yellow" width="40" height="30">
   <data encoding="base64" compression="zlib">
-   eJztzLEJAAAIBLEH99/ZFbRTSODaSwCAz2rY5gUAAJc0mS8AJQ==
+   eJzt1TENAAAIwDAS/HvGBMeONpmGzfRtNAAo+PyWxwEAUHSJKwCX
   </data>
  </layer>
  <layer name="blue" width="40" height="30">

@@ -4,7 +4,6 @@ import com.asda.zombiex.handlers.BoundedCamera;
 import com.asda.zombiex.handlers.Content;
 import com.asda.zombiex.handlers.GameStateManager;
 import com.asda.zombiex.handlers.InputController;
-import com.asda.zombiex.handlers.InputKeys;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -53,7 +52,7 @@ public class Game extends ApplicationAdapter {
     public void render() {
         gsm.update(Gdx.graphics.getDeltaTime());
         gsm.render();
-        InputKeys.update();
+        InputController.update();
     }
 
     @Override
