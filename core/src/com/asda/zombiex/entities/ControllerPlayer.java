@@ -102,6 +102,42 @@ public class ControllerPlayer {
         return 0f;
     }
 
+    public float getAnalogAngle() {
+        float angle1 = getAnalogAngle(InputController.inputKeys[0]);
+        float angle2 = getAnalogAngle(InputController.inputKeys[1]);
+
+        return angle1 > angle2 ? angle1 : angle2;
+    }
+
+    private float getAnalogAngle(InputKeys inputKeys) {
+        if (inputKeys.isDown()) {
+            vec.set(inputKeys.x, inputKeys.y, 0);
+            cam.unproject(vec);
+
+            if (vec.y > 0 && vec.y < analog.getHeight() && vec.x > 0 && vec.x <= analog.getWidth()) {
+                float analogCenterX = analog.getWidth() / 2;
+                float analogCenterY = analog.getHeight() / 2;
+
+                float angle = (float) Math.toDegrees(Math.atan2(vec.x - analogCenterX, vec.y - analogCenterY));
+                angle += 180;
+                if (angle < 0) {
+                    angle += 360;
+                }
+
+                return angle;
+            }
+        }
+
+        return 0f;
+    }
+
+    /**
+     * @param left  value from left side
+     * @param right value from right side
+     * @param value calculated value
+     * @return value in percent
+     */
+
     private float calcPercentValue(float left, float right, float value) {
         right -= left;
         value -= left;

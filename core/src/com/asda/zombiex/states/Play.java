@@ -144,6 +144,11 @@ public class Play extends GameState {
             player.moving(intensity);
         }
 
+        float angle = controllerPlayer.getAnalogAngle();
+        if (angle != 0f) {
+            player.setViewfinder(angle);
+        }
+
         if (controllerPlayer.isButtonJumpClicked()) {
             player.jump();
         }

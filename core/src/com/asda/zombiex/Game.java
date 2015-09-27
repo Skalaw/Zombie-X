@@ -44,6 +44,7 @@ public class Game extends ApplicationAdapter {
         res = new Content();
         res.loadTexture("images/badlogic.jpg", "badlogic");
         res.loadTexture("images/jenkins.png", "jenkins");
+        res.loadTexture("images/viewfinder.png", "viewfinder");
         res.loadTexture("images/controllers/analog.png", "analog");
         res.loadTexture("images/controllers/button.png", "button");
     }

@@ -2,6 +2,7 @@ package com.asda.zombiex.entities;
 
 import com.asda.zombiex.Game;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
@@ -10,6 +11,7 @@ import com.badlogic.gdx.physics.box2d.Body;
  * @author Skala
  */
 public class Player extends B2DSprite {
+    private Viewfinder viewfinder;
 
     public Player(Body body) {
         super(body);
@@ -17,7 +19,16 @@ public class Player extends B2DSprite {
         Texture tex = Game.res.getTexture("jenkins");
         TextureRegion sprite = new TextureRegion(tex, 0, 0, 25, 50);
 
+        viewfinder = new Viewfinder(body, 25, 50);
+
         setAnimation(sprite, 1 / 12f);
+    }
+
+    @Override
+    public void render(SpriteBatch sb) {
+        super.render(sb);
+
+        viewfinder.render(sb);
     }
 
     /**
@@ -49,5 +60,9 @@ public class Player extends B2DSprite {
         Vector2 vel = body.getLinearVelocity();
         body.setLinearVelocity(vel.x, 0);
         body.applyForceToCenter(0, 175, true);
+    }
+
+    public void setViewfinder(float angle) {
+        viewfinder.setAngle(angle);
     }
 }
