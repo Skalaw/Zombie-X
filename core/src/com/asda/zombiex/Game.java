@@ -47,6 +47,7 @@ public class Game extends ApplicationAdapter {
         res.loadTexture("images/viewfinder.png", "viewfinder");
         res.loadTexture("images/controllers/analog.png", "analog");
         res.loadTexture("images/controllers/button.png", "button");
+        res.loadTexture("images/controllers/fire.png", "fire");
     }
 
     @Override

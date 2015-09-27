@@ -152,6 +152,10 @@ public class Play extends GameState {
         if (controllerPlayer.isButtonJumpClicked()) {
             player.jump();
         }
+
+        if(controllerPlayer.isButtonFireClicked()) {
+            // TODO: implement fire code
+        }
     }
 
     @Override

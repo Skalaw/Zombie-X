@@ -16,18 +16,22 @@ public class ControllerPlayer {
     private OrthographicCamera cam;
 
     // TODO: to improvement change Texture to TextureRegion
-    private Texture analog;
+    private Texture buttonAnalog;
     private Texture buttonJump;
+    private Texture buttonFire;
     private Vector3 vec;
 
     private int buttonJumpX; // TODO: create class button
+    private int buttonFireY;
 
     public ControllerPlayer(OrthographicCamera cam) {
         this.cam = cam;
 
-        analog = Game.res.getTexture("analog");
+        buttonAnalog = Game.res.getTexture("analog");
         buttonJump = Game.res.getTexture("button");
         buttonJumpX = Game.V_WIDTH - buttonJump.getWidth();
+        buttonFire = Game.res.getTexture("fire");
+        buttonFireY = buttonFire.getHeight();
 
         vec = new Vector3();
     }
@@ -37,8 +41,9 @@ public class ControllerPlayer {
         sb.setColor(c.r, c.g, c.b, 0.3f);
 
         sb.begin();
-        sb.draw(analog, 0, 0);
+        sb.draw(buttonAnalog, 0, 0);
         sb.draw(buttonJump, buttonJumpX, 0);
+        sb.draw(buttonFire, buttonJumpX, buttonFireY);
         sb.end();
 
         sb.setColor(c.r, c.g, c.b, 1f);
@@ -61,6 +66,23 @@ public class ControllerPlayer {
         return false;
     }
 
+    public boolean isButtonFireClicked() {
+        return isButtonFireClicked(InputController.inputKeys[0]) || isButtonFireClicked(InputController.inputKeys[1]);
+    }
+
+    private boolean isButtonFireClicked(InputKeys inputKeys) {
+        if (inputKeys.isPressed()) {
+            vec.set(inputKeys.x, inputKeys.y, 0);
+            cam.unproject(vec);
+            if (vec.x > buttonJumpX && vec.x < buttonJumpX + buttonFire.getWidth()
+                    && vec.y > buttonFireY && vec.y < buttonFireY + buttonJump.getHeight()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public boolean isAnalogDown() {
         boolean firstPointer = isAnalogDown(InputController.inputKeys[0]);
         boolean secondPointer = isAnalogDown(InputController.inputKeys[1]);
@@ -71,7 +93,7 @@ public class ControllerPlayer {
     private boolean isAnalogDown(InputKeys inputKeys) {
         vec.set(inputKeys.x, inputKeys.y, 0);
         cam.unproject(vec);
-        return !inputKeys.isPressed() || !(vec.y > 0 && vec.y < analog.getHeight() && vec.x > 0 && vec.x <= analog.getWidth());
+        return !inputKeys.isPressed() || !(vec.y > 0 && vec.y < buttonAnalog.getHeight() && vec.x > 0 && vec.x <= buttonAnalog.getWidth());
     }
 
     /**
@@ -90,11 +112,11 @@ public class ControllerPlayer {
             vec.set(inputKeys.x, inputKeys.y, 0);
             cam.unproject(vec);
 
-            if (vec.y > 0 && vec.y < analog.getHeight()) {
-                if (vec.x > 0 && vec.x <= analog.getWidth() / 2) {
-                    return -(1 - calcPercentValue(0, analog.getWidth() / 2, vec.x));
-                } else if (vec.x > analog.getWidth() / 2 && vec.x < analog.getWidth()) {
-                    return calcPercentValue(analog.getWidth() / 2, analog.getWidth(), vec.x);
+            if (vec.y > 0 && vec.y < buttonAnalog.getHeight()) {
+                if (vec.x > 0 && vec.x <= buttonAnalog.getWidth() / 2) {
+                    return -(1 - calcPercentValue(0, buttonAnalog.getWidth() / 2, vec.x));
+                } else if (vec.x > buttonAnalog.getWidth() / 2 && vec.x < buttonAnalog.getWidth()) {
+                    return calcPercentValue(buttonAnalog.getWidth() / 2, buttonAnalog.getWidth(), vec.x);
                 }
             }
         }
@@ -114,9 +136,9 @@ public class ControllerPlayer {
             vec.set(inputKeys.x, inputKeys.y, 0);
             cam.unproject(vec);
 
-            if (vec.y > 0 && vec.y < analog.getHeight() && vec.x > 0 && vec.x <= analog.getWidth()) {
-                float analogCenterX = analog.getWidth() / 2;
-                float analogCenterY = analog.getHeight() / 2;
+            if (vec.y > 0 && vec.y < buttonAnalog.getHeight() && vec.x > 0 && vec.x <= buttonAnalog.getWidth()) {
+                float analogCenterX = buttonAnalog.getWidth() / 2;
+                float analogCenterY = buttonAnalog.getHeight() / 2;
 
                 float angle = (float) Math.toDegrees(Math.atan2(vec.x - analogCenterX, vec.y - analogCenterY));
                 angle += 180;
