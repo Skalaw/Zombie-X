@@ -79,9 +79,13 @@ public class Play extends GameState {
         BodyDef bdef = new BodyDef();
         FixtureDef fdef = new FixtureDef();
 
+        float sizeTileB2D = tileSize / 2 / PPM;
+
         // go through all the cells in the layer
-        for (int row = 0; row < layer.getHeight(); row++) {
-            for (int col = 0; col < layer.getWidth(); col++) {
+        int height = layer.getHeight();
+        int width = layer.getWidth();
+        for (int row = 0; row < height; row++) {
+            for (int col = 0; col < width; col++) {
                 TiledMapTileLayer.Cell cell = layer.getCell(col, row);
                 if (cell == null || cell.getTile() == null) {
                     continue;
@@ -91,10 +95,11 @@ public class Play extends GameState {
                 bdef.position.set((col + 0.5f) * tileSize / PPM, (row + 0.5f) * tileSize / PPM);
 
                 ChainShape cs = new ChainShape();
-                Vector2[] v = new Vector2[3];
-                v[0] = new Vector2(-tileSize / 2 / PPM, -tileSize / 2 / PPM);
-                v[1] = new Vector2(-tileSize / 2 / PPM, tileSize / 2 / PPM);
-                v[2] = new Vector2(tileSize / 2 / PPM, tileSize / 2 / PPM);
+                Vector2[] v = new Vector2[4];
+                v[0] = new Vector2(-sizeTileB2D, -sizeTileB2D);
+                v[1] = new Vector2(-sizeTileB2D, sizeTileB2D);
+                v[2] = new Vector2(sizeTileB2D, sizeTileB2D);
+                v[3] = new Vector2(sizeTileB2D, -sizeTileB2D);
                 cs.createChain(v);
                 fdef.friction = 0;
                 fdef.shape = cs;
@@ -153,7 +158,7 @@ public class Play extends GameState {
             player.jump();
         }
 
-        if(controllerPlayer.isButtonFireClicked()) {
+        if (controllerPlayer.isButtonFireClicked()) {
             // TODO: implement fire code
         }
     }
@@ -178,13 +183,13 @@ public class Play extends GameState {
         mapRenderer.setView(cam);
         mapRenderer.render();
 
-        // draw mControllerPlayer
-        sb.setProjectionMatrix(hudCam.combined);
-        controllerPlayer.render(sb);
-
         // draw player
         sb.setProjectionMatrix(cam.combined);
         player.render(sb);
+
+        // draw mControllerPlayer
+        sb.setProjectionMatrix(hudCam.combined);
+        controllerPlayer.render(sb);
     }
 
     @Override
