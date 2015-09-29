@@ -10,10 +10,14 @@ import com.badlogic.gdx.physics.box2d.Body;
  * @author Skala
  */
 public class Viewfinder {
+    private final static int RADIUS = 50;
     private Texture tex;
     private Body playerBody;
     private int offsetX;
     private int offsetY;
+    private float offsetFromAngleX;
+    private float offsetFromAngleY;
+
     private float angle;
 
     public Viewfinder(Body playerBody, int width, int height) {
@@ -25,13 +29,6 @@ public class Viewfinder {
     }
 
     public void render(SpriteBatch sb) {
-        int r = 50;
-
-        float radian = angle * (float)Math.PI / 180;
-
-        float offsetFromAngleX = (float) Math.sin(radian) * r;
-        float offsetFromAngleY = (float) Math.cos(radian) * r;
-
         sb.begin();
         sb.draw(tex,
                 playerBody.getPosition().x * B2DVars.PPM - offsetX - offsetFromAngleX,
@@ -41,5 +38,13 @@ public class Viewfinder {
 
     public void setAngle(float angle) {
         this.angle = angle;
+        calculateDistance();
+    }
+
+    private void calculateDistance() {
+        float radian = angle * (float) Math.PI / 180;
+
+        offsetFromAngleX = (float) Math.sin(radian) * RADIUS;
+        offsetFromAngleY = (float) Math.cos(radian) * RADIUS;
     }
 }
