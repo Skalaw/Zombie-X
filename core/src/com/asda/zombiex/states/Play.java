@@ -1,6 +1,7 @@
 package com.asda.zombiex.states;
 
 import com.asda.zombiex.Game;
+import com.asda.zombiex.entities.Bullet;
 import com.asda.zombiex.entities.ControllerPlayer;
 import com.asda.zombiex.entities.Player;
 import com.asda.zombiex.handlers.B2DVars;
@@ -21,6 +22,8 @@ import com.badlogic.gdx.physics.box2d.MassData;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
 
+import java.util.ArrayList;
+
 import static com.asda.zombiex.handlers.B2DVars.PPM;
 
 /**
@@ -38,12 +41,14 @@ public class Play extends GameState {
 
     private ControllerPlayer controllerPlayer;
     private Player player;
+    private ArrayList<Bullet> bullets;
 
     public Play(GameStateManager gsm) {
         super(gsm);
 
         createWorld();
         createMap();
+        bullets = new ArrayList<Bullet>();
         createPlayer();
         controllerPlayer = new ControllerPlayer(hudCam);
     }
@@ -104,7 +109,7 @@ public class Play extends GameState {
                 fdef.friction = 0;
                 fdef.shape = cs;
                 fdef.filter.categoryBits = bits;
-                fdef.filter.maskBits = B2DVars.BIT_PLAYER;
+                fdef.filter.maskBits = B2DVars.BIT_PLAYER | B2DVars.BIT_BULLET;
                 world.createBody(bdef).createFixture(fdef);
                 cs.dispose();
             }
@@ -151,7 +156,8 @@ public class Play extends GameState {
 
         float angle = controllerPlayer.getAnalogAngle();
         if (angle != 0f) {
-            player.setViewfinder(angle);
+            float radian = angle * (float) Math.PI / 180;
+            player.setViewfinderRadian(radian);
         }
 
         if (controllerPlayer.isButtonJumpClicked()) {
@@ -159,7 +165,8 @@ public class Play extends GameState {
         }
 
         if (controllerPlayer.isButtonFireClicked()) {
-            // TODO: implement fire code
+            Bullet bullet = player.shot(world);
+            bullets.add(bullet);
         }
     }
 
@@ -168,6 +175,16 @@ public class Play extends GameState {
         handleInput();
         world.step(Game.STEP, 8, 3);
         player.update(dt);
+
+        // update player bullets
+        for (int i = 0; i < bullets.size(); i++) {
+            Bullet bullet = bullets.get(i);
+            bullet.update(dt);
+            if (bullets.get(i).shouldRemove()) {
+                bullets.remove(i);
+                i--;
+            }
+        }
     }
 
     @Override
@@ -187,7 +204,13 @@ public class Play extends GameState {
         sb.setProjectionMatrix(cam.combined);
         player.render(sb);
 
-        // draw mControllerPlayer
+        // draw bullets
+        int size = bullets.size();
+        for(int i = 0; i < size; i++) {
+            bullets.get(i).render(sb);
+        }
+
+        // draw controllerPlayer
         sb.setProjectionMatrix(hudCam.combined);
         controllerPlayer.render(sb);
     }

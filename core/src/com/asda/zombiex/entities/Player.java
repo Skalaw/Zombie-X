@@ -1,11 +1,19 @@
 package com.asda.zombiex.entities;
 
 import com.asda.zombiex.Game;
+import com.asda.zombiex.handlers.B2DVars;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
+import com.badlogic.gdx.physics.box2d.BodyDef;
+import com.badlogic.gdx.physics.box2d.FixtureDef;
+import com.badlogic.gdx.physics.box2d.MassData;
+import com.badlogic.gdx.physics.box2d.PolygonShape;
+import com.badlogic.gdx.physics.box2d.World;
+
+import static com.asda.zombiex.handlers.B2DVars.PPM;
 
 /**
  * @author Skala
@@ -33,6 +41,7 @@ public class Player extends B2DSprite {
 
     /**
      * Set moving left or right
+     *
      * @param intensity in percentage
      */
 
@@ -62,7 +71,48 @@ public class Player extends B2DSprite {
         body.applyForceToCenter(0, 175, true);
     }
 
-    public void setViewfinder(float angle) {
-        viewfinder.setAngle(angle);
+    /**
+     * Shoot player
+     */
+
+    public Bullet shot(World world) {
+        BodyDef bdef = new BodyDef();
+        bdef.position.set(body.getPosition());
+        bdef.type = BodyDef.BodyType.DynamicBody;
+        bdef.fixedRotation = true;
+
+        Body body = world.createBody(bdef);
+
+        PolygonShape shape = new PolygonShape();
+        shape.setAsBox(4f / PPM, 4f / PPM);
+        FixtureDef fdef = new FixtureDef();
+        fdef.shape = shape;
+        fdef.density = 1f;
+        fdef.friction = 0;
+        fdef.filter.categoryBits = B2DVars.BIT_BULLET;
+        fdef.filter.maskBits = B2DVars.BIT_RED_BLOCK | B2DVars.BIT_GREEN_BLOCK | B2DVars.BIT_BLUE_BLOCK | B2DVars.BIT_YELLOW_BLOCK;
+        body.createFixture(fdef);
+        shape.dispose();
+
+        Bullet bullet = new Bullet(body);
+        body.setUserData(bullet);
+
+        MassData md = body.getMassData();
+        md.mass = 1f;
+        body.setMassData(md);
+
+        float power = 4.5f;
+        float radian = viewfinder.getRadian();
+        float dx = (float) -Math.cos(radian) * power;
+        float dy = (float) Math.sin(radian) * power;
+
+        Vector2 pos = body.getPosition();
+        body.applyLinearImpulse(dx, dy, pos.x, pos.y, true);
+
+        return bullet;
+    }
+
+    public void setViewfinderRadian(float radian) {
+        viewfinder.setRadian(radian);
     }
 }

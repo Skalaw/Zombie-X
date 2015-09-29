@@ -47,6 +47,7 @@ public class Game extends ApplicationAdapter {
 
         // game
         res.loadTexture("images/jenkins.png", "jenkins");
+        res.loadTexture("images/bullet.png", "bullet");
         res.loadTexture("images/viewfinder.png", "viewfinder");
 
         // controllers

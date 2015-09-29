@@ -18,7 +18,7 @@ public class Viewfinder {
     private float offsetFromAngleX;
     private float offsetFromAngleY;
 
-    private float angle;
+    private float radian;
 
     public Viewfinder(Body playerBody, int width, int height) {
         this.playerBody = playerBody;
@@ -26,6 +26,7 @@ public class Viewfinder {
 
         offsetX = (width - tex.getWidth()) / 2;
         offsetY = (height - tex.getHeight()) / 2;
+        setRadian(0); // init
     }
 
     public void render(SpriteBatch sb) {
@@ -36,15 +37,17 @@ public class Viewfinder {
         sb.end();
     }
 
-    public void setAngle(float angle) {
-        this.angle = angle;
+    public void setRadian(float radian) {
+        this.radian = radian;
         calculateDistance();
     }
 
-    private void calculateDistance() {
-        float radian = angle * (float) Math.PI / 180;
+    public float getRadian() {
+        return radian;
+    }
 
-        offsetFromAngleX = (float) Math.sin(radian) * RADIUS;
-        offsetFromAngleY = (float) Math.cos(radian) * RADIUS;
+    private void calculateDistance() {
+        offsetFromAngleX = (float) Math.cos(radian) * RADIUS;
+        offsetFromAngleY = (float) -Math.sin(radian) * RADIUS;
     }
 }

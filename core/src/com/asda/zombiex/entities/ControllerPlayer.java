@@ -3,6 +3,7 @@ package com.asda.zombiex.entities;
 import com.asda.zombiex.Game;
 import com.asda.zombiex.handlers.InputController;
 import com.asda.zombiex.handlers.InputKeys;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
@@ -141,7 +142,8 @@ public class ControllerPlayer {
                 float analogCenterY = buttonAnalog.getHeight() / 2;
 
                 float angle = (float) Math.toDegrees(Math.atan2(vec.x - analogCenterX, vec.y - analogCenterY));
-                angle += 180;
+                Gdx.app.log("ControllerPlayer", "angle: " + angle);
+                angle += 90;
                 if (angle < 0) {
                     angle += 360;
                 }
