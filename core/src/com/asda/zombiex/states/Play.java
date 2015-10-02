@@ -105,12 +105,12 @@ public class Play extends GameState {
                 v[1] = new Vector2(-sizeTileB2D, sizeTileB2D);
                 v[2] = new Vector2(sizeTileB2D, sizeTileB2D);
                 v[3] = new Vector2(sizeTileB2D, -sizeTileB2D);
-                cs.createChain(v);
+                cs.createLoop(v);
                 fdef.friction = 0;
                 fdef.shape = cs;
                 fdef.filter.categoryBits = bits;
                 fdef.filter.maskBits = B2DVars.BIT_PLAYER | B2DVars.BIT_BULLET;
-                world.createBody(bdef).createFixture(fdef);
+                world.createBody(bdef).createFixture(fdef).setUserData("block");
                 cs.dispose();
             }
         }
@@ -132,7 +132,7 @@ public class Play extends GameState {
         fdef.friction = 0;
         fdef.filter.categoryBits = B2DVars.BIT_PLAYER;
         fdef.filter.maskBits = B2DVars.BIT_RED_BLOCK | B2DVars.BIT_GREEN_BLOCK | B2DVars.BIT_BLUE_BLOCK | B2DVars.BIT_YELLOW_BLOCK;
-        body.createFixture(fdef);
+        body.createFixture(fdef).setUserData("player");
         shape.dispose();
 
         player = new Player(body);
@@ -206,7 +206,7 @@ public class Play extends GameState {
 
         // draw bullets
         int size = bullets.size();
-        for(int i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++) {
             bullets.get(i).render(sb);
         }
 

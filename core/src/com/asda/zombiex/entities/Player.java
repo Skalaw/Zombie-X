@@ -79,7 +79,6 @@ public class Player extends B2DSprite {
         BodyDef bdef = new BodyDef();
         bdef.position.set(body.getPosition());
         bdef.type = BodyDef.BodyType.DynamicBody;
-        bdef.fixedRotation = true;
 
         Body body = world.createBody(bdef);
 
@@ -88,10 +87,10 @@ public class Player extends B2DSprite {
         FixtureDef fdef = new FixtureDef();
         fdef.shape = shape;
         fdef.density = 1f;
-        fdef.friction = 0;
+        fdef.restitution = 0.2f;
         fdef.filter.categoryBits = B2DVars.BIT_BULLET;
         fdef.filter.maskBits = B2DVars.BIT_RED_BLOCK | B2DVars.BIT_GREEN_BLOCK | B2DVars.BIT_BLUE_BLOCK | B2DVars.BIT_YELLOW_BLOCK;
-        body.createFixture(fdef);
+        body.createFixture(fdef).setUserData("bullet");
         shape.dispose();
 
         Bullet bullet = new Bullet(body);

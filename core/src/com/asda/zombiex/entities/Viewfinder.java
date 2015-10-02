@@ -26,7 +26,7 @@ public class Viewfinder {
 
         offsetX = (width - tex.getWidth()) / 2;
         offsetY = (height - tex.getHeight()) / 2;
-        setRadian(0); // init
+        setRadian((float) Math.PI); // init (180 angle)
     }
 
     public void render(SpriteBatch sb) {
