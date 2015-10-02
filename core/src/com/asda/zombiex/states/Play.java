@@ -85,6 +85,14 @@ public class Play extends GameState {
 
         float sizeTileB2D = tileSize / 2 / PPM;
 
+        ChainShape cs = new ChainShape();
+        float vectors[] = {
+                -sizeTileB2D, -sizeTileB2D,
+                -sizeTileB2D, sizeTileB2D,
+                sizeTileB2D, sizeTileB2D,
+                sizeTileB2D, -sizeTileB2D};
+        cs.createLoop(vectors);
+
         // go through all the cells in the layer
         int height = layer.getHeight();
         int width = layer.getWidth();
@@ -97,22 +105,15 @@ public class Play extends GameState {
 
                 bdef.type = BodyDef.BodyType.StaticBody;
                 bdef.position.set((col + 0.5f) * tileSize / PPM, (row + 0.5f) * tileSize / PPM);
-
-                ChainShape cs = new ChainShape();
-                Vector2[] v = new Vector2[4];
-                v[0] = new Vector2(-sizeTileB2D, -sizeTileB2D);
-                v[1] = new Vector2(-sizeTileB2D, sizeTileB2D);
-                v[2] = new Vector2(sizeTileB2D, sizeTileB2D);
-                v[3] = new Vector2(sizeTileB2D, -sizeTileB2D);
-                cs.createLoop(v);
                 fdef.friction = 0;
                 fdef.shape = cs;
                 fdef.filter.categoryBits = bits;
                 fdef.filter.maskBits = B2DVars.BIT_PLAYER | B2DVars.BIT_BULLET;
                 world.createBody(bdef).createFixture(fdef).setUserData("block");
-                cs.dispose();
             }
         }
+
+        cs.dispose();
     }
 
     private void createPlayer() {
