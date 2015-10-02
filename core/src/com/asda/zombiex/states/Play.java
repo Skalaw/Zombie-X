@@ -211,6 +211,7 @@ public class Play extends GameState {
         for (int i = 0; i < destroyBulletEffect.size; i++) {
             ParticleEffect particleEffect = destroyBulletEffect.get(i);
             if (particleEffect.isComplete()) {
+                particleEffect.dispose();
                 destroyBulletEffect.removeValue(particleEffect, true);
                 i--;
             }
