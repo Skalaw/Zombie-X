@@ -9,6 +9,7 @@ import com.asda.zombiex.handlers.GameContactListener;
 import com.asda.zombiex.handlers.GameStateManager;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.g2d.ParticleEffect;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
@@ -41,6 +42,7 @@ public class Play extends GameState {
     private ControllerPlayer controllerPlayer;
     private Player player;
     private Array<Bullet> bullets;
+    private Array<ParticleEffect> destroyBulletEffect;
 
     public Play(GameStateManager gsm) {
         super(gsm);
@@ -50,6 +52,8 @@ public class Play extends GameState {
         bullets = new Array<Bullet>();
         createPlayer();
         controllerPlayer = new ControllerPlayer(hudCam);
+
+        destroyBulletEffect = new Array<ParticleEffect>();
     }
 
     private void createWorld() {
@@ -189,6 +193,12 @@ public class Play extends GameState {
             Body body = bodies.get(i);
             boolean isRemove = bullets.removeValue((Bullet) body.getUserData(), true);
             if (isRemove) {
+                ParticleEffect particleEffect = new ParticleEffect();
+                particleEffect.load(Gdx.files.internal("particle/destroy_blocks.p"), Gdx.files.internal("particle"));
+                particleEffect.setPosition(body.getPosition().x * PPM, body.getPosition().y * PPM);
+                particleEffect.start();
+                destroyBulletEffect.add(particleEffect);
+
                 body.setUserData(null);
                 world.destroyBody(body);
             }
@@ -217,6 +227,18 @@ public class Play extends GameState {
         for (int i = 0; i < bullets.size; i++) {
             bullets.get(i).render(sb);
         }
+
+        sb.begin();
+        for (int i = 0; i < destroyBulletEffect.size; i++) {
+            ParticleEffect particleEffect = destroyBulletEffect.get(i);
+            if (particleEffect.isComplete()) {
+                destroyBulletEffect.removeValue(particleEffect, true);
+                i--;
+            } else {
+                particleEffect.draw(sb, Gdx.graphics.getDeltaTime());
+            }
+        }
+        sb.end();
 
         // draw controllerPlayer
         sb.setProjectionMatrix(hudCam.combined);
