@@ -180,6 +180,7 @@ public class Play extends GameState {
         world.step(Game.STEP, 1, 1);
 
         removeBullets();
+        removeEndedDestroyBulletEffects();
 
         player.update(dt);
         for (int i = 0; i < bullets.size; i++) {
@@ -204,6 +205,16 @@ public class Play extends GameState {
             }
         }
         bodies.clear();
+    }
+
+    private void removeEndedDestroyBulletEffects() {
+        for (int i = 0; i < destroyBulletEffect.size; i++) {
+            ParticleEffect particleEffect = destroyBulletEffect.get(i);
+            if (particleEffect.isComplete()) {
+                destroyBulletEffect.removeValue(particleEffect, true);
+                i--;
+            }
+        }
     }
 
     @Override
@@ -231,12 +242,7 @@ public class Play extends GameState {
         sb.begin();
         for (int i = 0; i < destroyBulletEffect.size; i++) {
             ParticleEffect particleEffect = destroyBulletEffect.get(i);
-            if (particleEffect.isComplete()) {
-                destroyBulletEffect.removeValue(particleEffect, true);
-                i--;
-            } else {
-                particleEffect.draw(sb, Gdx.graphics.getDeltaTime());
-            }
+            particleEffect.draw(sb, Gdx.graphics.getDeltaTime());
         }
         sb.end();
 
