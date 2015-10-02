@@ -9,7 +9,6 @@ import com.badlogic.gdx.physics.box2d.Body;
  * @author Skala
  */
 public class Bullet extends B2DSprite {
-    private boolean remove = false;
 
     public Bullet(Body body) {
         super(body);
@@ -18,9 +17,5 @@ public class Bullet extends B2DSprite {
         TextureRegion sprite = new TextureRegion(tex, 0, 0, 8, 8);
 
         setAnimation(sprite, 1 / 12f);
-    }
-
-    public boolean shouldRemove() {
-        return remove;
     }
 }

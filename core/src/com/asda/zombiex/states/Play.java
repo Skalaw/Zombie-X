@@ -21,8 +21,7 @@ import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.MassData;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
-
-import java.util.ArrayList;
+import com.badlogic.gdx.utils.Array;
 
 import static com.asda.zombiex.handlers.B2DVars.PPM;
 
@@ -41,14 +40,14 @@ public class Play extends GameState {
 
     private ControllerPlayer controllerPlayer;
     private Player player;
-    private ArrayList<Bullet> bullets;
+    private Array<Bullet> bullets;
 
     public Play(GameStateManager gsm) {
         super(gsm);
 
         createWorld();
         createMap();
-        bullets = new ArrayList<Bullet>();
+        bullets = new Array<Bullet>();
         createPlayer();
         controllerPlayer = new ControllerPlayer(hudCam);
     }
@@ -173,18 +172,27 @@ public class Play extends GameState {
     @Override
     public void update(float dt) {
         handleInput();
-        world.step(Game.STEP, 8, 3);
-        player.update(dt);
+        world.step(Game.STEP, 1, 1);
 
-        // update player bullets
-        for (int i = 0; i < bullets.size(); i++) {
-            Bullet bullet = bullets.get(i);
-            bullet.update(dt);
-            if (bullets.get(i).shouldRemove()) {
-                bullets.remove(i);
-                i--;
+        removeBullets();
+
+        player.update(dt);
+        for (int i = 0; i < bullets.size; i++) {
+            bullets.get(i).update(dt);
+        }
+    }
+
+    private void removeBullets() {
+        Array<Body> bodies = cl.getBodiesToRemove();
+        for (int i = 0; i < bodies.size; i++) {
+            Body body = bodies.get(i);
+            boolean isRemove = bullets.removeValue((Bullet) body.getUserData(), true);
+            if (isRemove) {
+                body.setUserData(null);
+                world.destroyBody(body);
             }
         }
+        bodies.clear();
     }
 
     @Override
@@ -205,8 +213,7 @@ public class Play extends GameState {
         player.render(sb);
 
         // draw bullets
-        int size = bullets.size();
-        for (int i = 0; i < size; i++) {
+        for (int i = 0; i < bullets.size; i++) {
             bullets.get(i).render(sb);
         }
 
