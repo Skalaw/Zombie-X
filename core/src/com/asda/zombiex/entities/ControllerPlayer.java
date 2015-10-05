@@ -3,7 +3,6 @@ package com.asda.zombiex.entities;
 import com.asda.zombiex.Game;
 import com.asda.zombiex.handlers.InputController;
 import com.asda.zombiex.handlers.InputKeys;
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
@@ -72,7 +71,7 @@ public class ControllerPlayer {
     }
 
     private boolean isButtonFireClicked(InputKeys inputKeys) {
-        if (inputKeys.isPressed()) {
+        if (inputKeys.isDown()) {
             vec.set(inputKeys.x, inputKeys.y, 0);
             cam.unproject(vec);
             if (vec.x > buttonJumpX && vec.x < buttonJumpX + buttonFire.getWidth()
@@ -142,7 +141,6 @@ public class ControllerPlayer {
                 float analogCenterY = buttonAnalog.getHeight() / 2;
 
                 float angle = (float) Math.toDegrees(Math.atan2(vec.x - analogCenterX, vec.y - analogCenterY));
-                Gdx.app.log("ControllerPlayer", "angle: " + angle);
                 angle += 90;
                 if (angle < 0) {
                     angle += 360;

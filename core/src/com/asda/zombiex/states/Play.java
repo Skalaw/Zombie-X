@@ -169,8 +169,10 @@ public class Play extends GameState {
         }
 
         if (controllerPlayer.isButtonFireClicked()) {
-            Bullet bullet = player.shot(world);
-            bullets.add(bullet);
+            if (player.canShot()) {
+                Bullet bullet = player.shot(world);
+                bullets.add(bullet);
+            }
         }
     }
 

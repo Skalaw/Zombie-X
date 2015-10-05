@@ -19,7 +19,11 @@ import static com.asda.zombiex.handlers.B2DVars.PPM;
  * @author Skala
  */
 public class Player extends B2DSprite {
+    private final static float SHOT_RATE = 0.3f;
+
     private Viewfinder viewfinder;
+    private float shotTime = 0f;
+    private float actualTime = 0;
 
     public Player(Body body) {
         super(body);
@@ -30,6 +34,13 @@ public class Player extends B2DSprite {
         viewfinder = new Viewfinder(body, 25, 50);
 
         setAnimation(sprite, 1 / 12f);
+    }
+
+    @Override
+    public void update(float dt) {
+        super.update(dt);
+
+        actualTime += dt;
     }
 
     @Override
@@ -76,6 +87,8 @@ public class Player extends B2DSprite {
      */
 
     public Bullet shot(World world) {
+        shotTime = actualTime;
+
         BodyDef bdef = new BodyDef();
         bdef.position.set(body.getPosition());
         bdef.type = BodyDef.BodyType.DynamicBody;
@@ -109,6 +122,10 @@ public class Player extends B2DSprite {
         body.applyLinearImpulse(dx, dy, pos.x, pos.y, true);
 
         return bullet;
+    }
+
+    public boolean canShot() {
+        return actualTime > shotTime + SHOT_RATE;
     }
 
     public void setViewfinderRadian(float radian) {
