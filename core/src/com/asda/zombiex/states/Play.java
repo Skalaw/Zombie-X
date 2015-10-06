@@ -18,6 +18,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.ChainShape;
+import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.MassData;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
@@ -81,6 +82,8 @@ public class Play extends GameState {
         createBlocks(layer, B2DVars.BIT_BLUE_BLOCK);
         layer = (TiledMapTileLayer) map.getLayers().get("yellow");
         createBlocks(layer, B2DVars.BIT_YELLOW_BLOCK);
+
+        createBorderMap();
     }
 
     private void createBlocks(TiledMapTileLayer layer, short bits) {
@@ -107,22 +110,58 @@ public class Play extends GameState {
                     continue;
                 }
 
+                if (bits == B2DVars.BIT_GREEN_BLOCK) {
+                    fdef.restitution = 0.8f;
+                }
+
                 bdef.type = BodyDef.BodyType.StaticBody;
                 bdef.position.set((col + 0.5f) * tileSize / PPM, (row + 0.5f) * tileSize / PPM);
                 fdef.friction = 0;
                 fdef.shape = cs;
                 fdef.filter.categoryBits = bits;
                 fdef.filter.maskBits = B2DVars.BIT_PLAYER | B2DVars.BIT_BULLET;
-                world.createBody(bdef).createFixture(fdef).setUserData("block");
+                Fixture fixture = world.createBody(bdef).createFixture(fdef);
+                if (bits == B2DVars.BIT_GREEN_BLOCK) {
+                    fixture.setUserData("block_green");
+                } else {
+                    fixture.setUserData("block");
+                }
             }
         }
 
         cs.dispose();
     }
 
+    private void createBorderMap() {
+        BodyDef bdef = new BodyDef();
+        FixtureDef fdef = new FixtureDef();
+
+        float borderWidth = tileMapWidth * tileSize / 2 / PPM;
+        float borderHeight = tileMapHeight * tileSize / 2 / PPM;
+
+        ChainShape cs = new ChainShape();
+        float vectors[] = {
+                -borderWidth, -borderHeight,
+                -borderWidth, borderHeight,
+                borderWidth, borderHeight,
+                borderWidth, -borderHeight};
+        cs.createLoop(vectors);
+
+        bdef.type = BodyDef.BodyType.StaticBody;
+        bdef.position.set(borderWidth, borderHeight);
+        fdef.friction = 0;
+        fdef.shape = cs;
+        fdef.filter.categoryBits = B2DVars.BIT_BORDER;
+        fdef.filter.maskBits = B2DVars.BIT_PLAYER | B2DVars.BIT_BULLET;
+
+        world.createBody(bdef).createFixture(fdef).setUserData("border");
+
+        cs.dispose();
+    }
+
     private void createPlayer() {
         BodyDef bdef = new BodyDef();
-        bdef.position.set(50 / PPM, (tileMapHeight - 4) * tileSize / PPM);
+        bdef.position.set(50 / PPM, (tileMapHeight - 6) * tileSize / PPM);
         bdef.type = BodyDef.BodyType.DynamicBody;
         bdef.fixedRotation = true;
 
@@ -135,7 +174,7 @@ public class Play extends GameState {
         fdef.density = 1f;
         fdef.friction = 0;
         fdef.filter.categoryBits = B2DVars.BIT_PLAYER;
-        fdef.filter.maskBits = B2DVars.BIT_RED_BLOCK | B2DVars.BIT_GREEN_BLOCK | B2DVars.BIT_BLUE_BLOCK | B2DVars.BIT_YELLOW_BLOCK;
+        fdef.filter.maskBits = B2DVars.BIT_RED_BLOCK | B2DVars.BIT_GREEN_BLOCK | B2DVars.BIT_BLUE_BLOCK | B2DVars.BIT_YELLOW_BLOCK | B2DVars.BIT_BORDER;
         body.createFixture(fdef).setUserData("player");
         shape.dispose();
 

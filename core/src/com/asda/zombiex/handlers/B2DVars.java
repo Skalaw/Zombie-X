@@ -14,4 +14,5 @@ public class B2DVars {
     public static final short BIT_BLUE_BLOCK = 16;
     public static final short BIT_YELLOW_BLOCK = 32;
     public static final short BIT_BULLET = 64;
+    public static final short BIT_BORDER = 128;
 }

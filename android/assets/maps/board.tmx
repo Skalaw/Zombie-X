@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" orientation="orthogonal" width="40" height="30" tilewidth="25" tileheight="25">
+<map version="1.0" orientation="orthogonal" width="40" height="32" tilewidth="25" tileheight="25">
  <tileset firstgid="1" name="block" tilewidth="25" tileheight="25">
   <image source="block.png" width="100" height="25"/>
  </tileset>
- <layer name="red" width="40" height="30">
+ <layer name="red" width="40" height="32">
   <data encoding="base64" compression="zlib">
-   eJzt16ENAEAIA0DYf+mXKHBPEHdJF6ho0gjgh2xC0QvYCQAAbug+7JRND9hoABw=
+   eJzt17EJAAAIAzD9/2lHJx3FIYE+0KHQCIB/cghNL2AnAAD4YfqwWy4V2agAHA==
   </data>
  </layer>
- <layer name="green" width="40" height="30">
+ <layer name="green" width="40" height="32">
   <data encoding="base64" compression="zlib">
-   eJzt1sEJAAAIxLDD/Yd2AcGvSALdoQkAcFEtAQDA5ONHNtAAACE=
+   eJzt1sEJAAAIA7Hi/kO7gOC/JHA7XAIA0GeeAADg0viRC9FAACE=
   </data>
  </layer>
- <layer name="yellow" width="40" height="30">
+ <layer name="yellow" width="40" height="32">
   <data encoding="base64" compression="zlib">
-   eJzt1TENAAAIwDAS/HvGBMeONpmGzfRtNAAo+PyWxwEAUHSJKwCX
+   eJzt1cEJAAAIA7GC++/sEj4KJnAzXMIHUxYAtLh8l88BANBoAR9/AJE=
   </data>
  </layer>
- <layer name="blue" width="40" height="30">
+ <layer name="blue" width="40" height="32">
   <data encoding="base64" compression="zlib">
-   eJztw0EJAAAIBLB72D+zBS6A4AZLAIBPpgQAgMsW6XAAFQ==
+   eJztw6ENAAAIA7AJ/r+ZByaQiDZpAgDA1ZQAAPDZAuqwABU=
   </data>
  </layer>
 </map>

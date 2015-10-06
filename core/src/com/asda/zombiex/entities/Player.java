@@ -102,7 +102,7 @@ public class Player extends B2DSprite {
         fdef.density = 1f;
         fdef.restitution = 0.2f;
         fdef.filter.categoryBits = B2DVars.BIT_BULLET;
-        fdef.filter.maskBits = B2DVars.BIT_RED_BLOCK | B2DVars.BIT_GREEN_BLOCK | B2DVars.BIT_BLUE_BLOCK | B2DVars.BIT_YELLOW_BLOCK;
+        fdef.filter.maskBits = B2DVars.BIT_RED_BLOCK | B2DVars.BIT_GREEN_BLOCK | B2DVars.BIT_BLUE_BLOCK | B2DVars.BIT_YELLOW_BLOCK | B2DVars.BIT_BORDER;
         body.createFixture(fdef).setUserData("bullet");
         shape.dispose();
 
