@@ -42,8 +42,13 @@ public class Play extends GameState {
 
     private ControllerPlayer controllerPlayer;
     private Player player;
+    private Player player2;
     private Array<Bullet> bullets;
     private Array<ParticleEffect> destroyBulletEffect;
+
+    private Player actualPlayer;
+
+    private boolean isPlayerOne = true;
 
     public Play(GameStateManager gsm) {
         super(gsm);
@@ -52,6 +57,8 @@ public class Play extends GameState {
         createMap();
         bullets = new Array<Bullet>();
         createPlayer();
+        createPlayer2();
+        actualPlayer = player;
         controllerPlayer = new ControllerPlayer(hudCam);
 
         destroyBulletEffect = new Array<ParticleEffect>();
@@ -186,31 +193,69 @@ public class Play extends GameState {
         body.setMassData(md);
     }
 
+    private void createPlayer2() {
+        BodyDef bdef = new BodyDef();
+        bdef.position.set((tileMapWidth - 6) * tileSize / PPM, (tileMapHeight - 6) * tileSize / PPM);
+        bdef.type = BodyDef.BodyType.DynamicBody;
+        bdef.fixedRotation = true;
+
+        Body body = world.createBody(bdef);
+
+        PolygonShape shape = new PolygonShape();
+        shape.setAsBox(12.5f / PPM, 25f / PPM);
+        FixtureDef fdef = new FixtureDef();
+        fdef.shape = shape;
+        fdef.density = 1f;
+        fdef.friction = 0;
+        fdef.filter.categoryBits = B2DVars.BIT_PLAYER;
+        fdef.filter.maskBits = B2DVars.BIT_RED_BLOCK | B2DVars.BIT_GREEN_BLOCK | B2DVars.BIT_BLUE_BLOCK | B2DVars.BIT_YELLOW_BLOCK | B2DVars.BIT_BORDER;
+        body.createFixture(fdef).setUserData("player");
+        shape.dispose();
+
+        player2 = new Player(body);
+        body.setUserData(player2);
+
+        MassData md = body.getMassData();
+        md.mass = 1f;
+        body.setMassData(md);
+    }
+
     @Override
     public void handleInput() {
         if (!controllerPlayer.isAnalogDown()) {
             player.braking();
+            player2.braking();
         }
 
         float intensity = controllerPlayer.getAnalogIntensity();
         if (intensity != 0f) {
-            player.moving(intensity);
+            actualPlayer.moving(intensity);
         }
 
         float angle = controllerPlayer.getAnalogAngle();
         if (angle != 0f) {
             float radian = angle * (float) Math.PI / 180;
-            player.setViewfinderRadian(radian);
+            actualPlayer.setViewfinderRadian(radian);
         }
 
         if (controllerPlayer.isButtonJumpClicked()) {
-            player.jump();
+            actualPlayer.jump();
         }
 
         if (controllerPlayer.isButtonFireClicked()) {
-            if (player.canShot()) {
-                Bullet bullet = player.shot(world);
+            if (actualPlayer.canShot()) {
+                Bullet bullet = actualPlayer.shot(world);
                 bullets.add(bullet);
+            }
+        }
+
+        if (controllerPlayer.isButtonChangePlayerClicked()) {
+            isPlayerOne = !isPlayerOne;
+
+            if(isPlayerOne) {
+                actualPlayer = player;
+            } else {
+                actualPlayer = player2;
             }
         }
     }
@@ -224,6 +269,7 @@ public class Play extends GameState {
         removeEndedDestroyBulletEffects();
 
         player.update(dt);
+        player2.update(dt);
         for (int i = 0; i < bullets.size; i++) {
             bullets.get(i).update(dt);
         }
@@ -265,8 +311,8 @@ public class Play extends GameState {
         Gdx.gl20.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         // camera follow player TODO: set better position camera
-        cam.setPosition(player.getPosition().x * PPM,
-                player.getPosition().y * PPM);
+        cam.setPosition(actualPlayer.getPosition().x * PPM,
+                actualPlayer.getPosition().y * PPM);
         cam.update();
 
         mapRenderer.setView(cam);
@@ -275,6 +321,7 @@ public class Play extends GameState {
         // draw player
         sb.setProjectionMatrix(cam.combined);
         player.render(sb);
+        player2.render(sb);
 
         // draw bullets
         for (int i = 0; i < bullets.size; i++) {

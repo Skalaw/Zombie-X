@@ -13,16 +13,20 @@ import com.badlogic.gdx.math.Vector3;
  * @author Skala
  */
 public class ControllerPlayer {
+    private final static float INTERFACE_TRANSPARENT = 0.3f;
+
     private OrthographicCamera cam;
 
     // TODO: to improvement change Texture to TextureRegion
     private Texture buttonAnalog;
     private Texture buttonJump;
     private Texture buttonFire;
+    private Texture buttonChangePlayer;
     private Vector3 vec;
 
     private int buttonJumpX; // TODO: create class button
     private int buttonFireY;
+    private int buttonChangePlayerY;
 
     public ControllerPlayer(OrthographicCamera cam) {
         this.cam = cam;
@@ -32,18 +36,21 @@ public class ControllerPlayer {
         buttonJumpX = Game.V_WIDTH - buttonJump.getWidth();
         buttonFire = Game.res.getTexture("fire");
         buttonFireY = buttonFire.getHeight();
+        buttonChangePlayer = Game.res.getTexture("button");
+        buttonChangePlayerY = buttonFireY + buttonChangePlayer.getHeight();
 
         vec = new Vector3();
     }
 
     public void render(SpriteBatch sb) {
         Color c = sb.getColor();
-        sb.setColor(c.r, c.g, c.b, 0.3f);
+        sb.setColor(c.r, c.g, c.b, INTERFACE_TRANSPARENT);
 
         sb.begin();
         sb.draw(buttonAnalog, 0, 0);
         sb.draw(buttonJump, buttonJumpX, 0);
         sb.draw(buttonFire, buttonJumpX, buttonFireY);
+        sb.draw(buttonChangePlayer, buttonJumpX, buttonChangePlayerY);
         sb.end();
 
         sb.setColor(c.r, c.g, c.b, 1f);
@@ -76,6 +83,23 @@ public class ControllerPlayer {
             cam.unproject(vec);
             if (vec.x > buttonJumpX && vec.x < buttonJumpX + buttonFire.getWidth()
                     && vec.y > buttonFireY && vec.y < buttonFireY + buttonJump.getHeight()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public boolean isButtonChangePlayerClicked() {
+        return isButtonChangePlayerClicked(InputController.inputKeys[0]) || isButtonChangePlayerClicked(InputController.inputKeys[1]);
+    }
+
+    private boolean isButtonChangePlayerClicked(InputKeys inputKeys) {
+        if (inputKeys.isPressed()) {
+            vec.set(inputKeys.x, inputKeys.y, 0);
+            cam.unproject(vec);
+            if (vec.x > buttonJumpX && vec.x < buttonJumpX + buttonChangePlayer.getWidth()
+                    && vec.y > buttonChangePlayerY && vec.y < buttonChangePlayerY + buttonChangePlayer.getHeight()) {
                 return true;
             }
         }
