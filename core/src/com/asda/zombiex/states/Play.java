@@ -7,6 +7,8 @@ import com.asda.zombiex.entities.Player;
 import com.asda.zombiex.handlers.B2DVars;
 import com.asda.zombiex.handlers.GameContactListener;
 import com.asda.zombiex.handlers.GameStateManager;
+import com.asda.zombiex.net.Client;
+import com.asda.zombiex.net.Server;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
@@ -24,6 +26,7 @@ import com.badlogic.gdx.physics.box2d.MassData;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.Timer;
 
 import static com.asda.zombiex.handlers.B2DVars.PPM;
 
@@ -41,14 +44,15 @@ public class Play extends GameState {
     private OrthogonalTiledMapRenderer mapRenderer;
 
     private ControllerPlayer controllerPlayer;
-    private Player player;
-    private Player player2;
+    private Array<Player> players;
+    private Player actualPlayer;
+    private int actualPlayerInt;
+
     private Array<Bullet> bullets;
     private Array<ParticleEffect> destroyBulletEffect;
 
-    private Player actualPlayer;
-
-    private boolean isPlayerOne = true;
+    private Server server;
+    private Client client;
 
     public Play(GameStateManager gsm) {
         super(gsm);
@@ -56,9 +60,14 @@ public class Play extends GameState {
         createWorld();
         createMap();
         bullets = new Array<Bullet>();
-        createPlayer();
-        createPlayer2();
+        players = new Array<Player>();
+
+        Player player = createPlayer(50 / PPM, (tileMapHeight - 6) * tileSize / PPM);
+        players.add(player);
         actualPlayer = player;
+        player = createPlayer((tileMapWidth - 6) * tileSize / PPM, (tileMapHeight - 6) * tileSize / PPM);
+        players.add(player);
+
         controllerPlayer = new ControllerPlayer(hudCam);
 
         destroyBulletEffect = new Array<ParticleEffect>();
@@ -166,9 +175,9 @@ public class Play extends GameState {
         cs.dispose();
     }
 
-    private void createPlayer() {
+    private Player createPlayer(float posX, float posY) {
         BodyDef bdef = new BodyDef();
-        bdef.position.set(50 / PPM, (tileMapHeight - 6) * tileSize / PPM);
+        bdef.position.set(posX, posY);
         bdef.type = BodyDef.BodyType.DynamicBody;
         bdef.fixedRotation = true;
 
@@ -185,46 +194,22 @@ public class Play extends GameState {
         body.createFixture(fdef).setUserData("player");
         shape.dispose();
 
-        player = new Player(body);
+        MassData md = body.getMassData();
+        md.mass = 1f;
+        body.setMassData(md);
+
+        Player player = new Player(body);
         body.setUserData(player);
 
-        MassData md = body.getMassData();
-        md.mass = 1f;
-        body.setMassData(md);
-    }
-
-    private void createPlayer2() {
-        BodyDef bdef = new BodyDef();
-        bdef.position.set((tileMapWidth - 6) * tileSize / PPM, (tileMapHeight - 6) * tileSize / PPM);
-        bdef.type = BodyDef.BodyType.DynamicBody;
-        bdef.fixedRotation = true;
-
-        Body body = world.createBody(bdef);
-
-        PolygonShape shape = new PolygonShape();
-        shape.setAsBox(12.5f / PPM, 25f / PPM);
-        FixtureDef fdef = new FixtureDef();
-        fdef.shape = shape;
-        fdef.density = 1f;
-        fdef.friction = 0;
-        fdef.filter.categoryBits = B2DVars.BIT_PLAYER;
-        fdef.filter.maskBits = B2DVars.BIT_RED_BLOCK | B2DVars.BIT_GREEN_BLOCK | B2DVars.BIT_BLUE_BLOCK | B2DVars.BIT_YELLOW_BLOCK | B2DVars.BIT_BORDER;
-        body.createFixture(fdef).setUserData("player");
-        shape.dispose();
-
-        player2 = new Player(body);
-        body.setUserData(player2);
-
-        MassData md = body.getMassData();
-        md.mass = 1f;
-        body.setMassData(md);
+        return player;
     }
 
     @Override
     public void handleInput() {
         if (!controllerPlayer.isAnalogDown()) {
-            player.braking();
-            player2.braking();
+            for (int i = 0; i < players.size; i++) {
+                players.get(i).braking();
+            }
         }
 
         float intensity = controllerPlayer.getAnalogIntensity();
@@ -240,6 +225,7 @@ public class Play extends GameState {
 
         if (controllerPlayer.isButtonJumpClicked()) {
             actualPlayer.jump();
+            //client.clientSendJump(); // TODO: fixing this
         }
 
         if (controllerPlayer.isButtonFireClicked()) {
@@ -250,13 +236,10 @@ public class Play extends GameState {
         }
 
         if (controllerPlayer.isButtonChangePlayerClicked()) {
-            isPlayerOne = !isPlayerOne;
+            actualPlayerInt++;
+            actualPlayerInt %= players.size;
 
-            if(isPlayerOne) {
-                actualPlayer = player;
-            } else {
-                actualPlayer = player2;
-            }
+            actualPlayer = players.get(actualPlayerInt);
         }
     }
 
@@ -268,8 +251,10 @@ public class Play extends GameState {
         removeBullets();
         removeEndedDestroyBulletEffects();
 
-        player.update(dt);
-        player2.update(dt);
+        for (int i = 0; i < players.size; i++) {
+            players.get(i).update(dt);
+        }
+
         for (int i = 0; i < bullets.size; i++) {
             bullets.get(i).update(dt);
         }
@@ -320,8 +305,9 @@ public class Play extends GameState {
 
         // draw player
         sb.setProjectionMatrix(cam.combined);
-        player.render(sb);
-        player2.render(sb);
+        for (int i = 0; i < players.size; i++) {
+            players.get(i).render(sb);
+        }
 
         // draw bullets
         for (int i = 0; i < bullets.size; i++) {
@@ -344,5 +330,26 @@ public class Play extends GameState {
     public void dispose() {
         map.dispose();
         mapRenderer.dispose();
+    }
+
+    public void setClient(String connectIp) {
+        client = new Client();
+        client.startClient(this, connectIp);
+    }
+
+    public void setServer(final String hostIp) {
+        server = new Server();
+        server.startServer(this, hostIp);
+
+        Timer.schedule(new Timer.Task() {
+            @Override
+            public void run() {
+                setClient(hostIp);
+            }
+        }, 0.1f);
+    }
+
+    public Player getActualPlayer() {
+        return actualPlayer;
     }
 }

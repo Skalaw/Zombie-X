@@ -22,6 +22,16 @@ public class Game extends ApplicationAdapter {
     private GameStateManager gsm;
     public static Content res;
 
+    private String ipHost;
+
+    public Game() {
+        this("0.0.0.0");
+    }
+
+    public Game(String ipHost) {
+        this.ipHost = ipHost;
+    }
+
     @Override
     public void create() {
         V_WIDTH = (V_HEIGHT * Gdx.graphics.getWidth()) / Gdx.graphics.getHeight();
@@ -42,8 +52,10 @@ public class Game extends ApplicationAdapter {
 
     private void initResources() {
         res = new Content();
-        // menu
-        res.loadTexture("images/badlogic.jpg", "badlogic");
+        // buttons menu
+        res.loadTexture("images/button_single.png", "button_single");
+        res.loadTexture("images/button_server.png", "button_server");
+        res.loadTexture("images/button_client.png", "button_client");
 
         // game
         res.loadTexture("images/jenkins.png", "jenkins");
@@ -78,5 +90,9 @@ public class Game extends ApplicationAdapter {
 
     public OrthographicCamera getHudCamera() {
         return hudCam;
+    }
+
+    public String getIpHost() {
+        return ipHost;
     }
 }

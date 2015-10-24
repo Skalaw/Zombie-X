@@ -21,7 +21,7 @@ public class GameStateManager {
     public GameStateManager(Game game) {
         this.game = game;
         gameStates = new Stack<GameState>();
-        pushState(PLAY);
+        pushState(MENU);
     }
 
     public void update(float dt) {
@@ -54,5 +54,13 @@ public class GameStateManager {
 
     public Game getGame() {
         return game;
+    }
+
+    public void setServer(String hostIp) {
+        ((Play) gameStates.peek()).setServer(hostIp);
+    }
+
+    public void setClient(String connectIp) {
+        ((Play) gameStates.peek()).setClient(connectIp);
     }
 }
