@@ -1,6 +1,5 @@
 package com.asda.zombiex.net;
 
-import com.asda.zombiex.states.Play;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Net;
 import com.badlogic.gdx.net.Socket;
@@ -12,19 +11,19 @@ import java.io.IOException;
  * @author Skala
  */
 public class Client {
-    private final static int PORT = 12203;
     private Socket socket;
-    private Play play;
+    private Response response;
 
-    public void startClient(Play play, String host) {
-        this.play = play;
+    public void startClient(Response response, String host) {
+        this.response = response;
 
         SocketHints socketHints = new SocketHints();
 
-        socket = Gdx.net.newClientSocket(Net.Protocol.TCP, host, PORT, socketHints); // "127.0.0.1" - localhost
+        socket = Gdx.net.newClientSocket(Net.Protocol.TCP, host, Server.PORT, socketHints); // "127.0.0.1" - localhost
         handleSocket();
     }
 
+    // create a thread that will listen data from incoming server
     private void handleSocket() {
         new Thread(new Runnable() {
             @Override
@@ -42,12 +41,9 @@ public class Client {
                         try {
                             socket.getInputStream().read(buffer);
                             String str = new String(buffer, "UTF-8");
-                            Gdx.app.log("Server", socket.getRemoteAddress() + " send: " + str);
+                            Gdx.app.log("Client", socket.getRemoteAddress() + " get: " + str);
 
-                            if (str.equals("jump")) {
-                                play.getActualPlayer().jump();
-                            }
-
+                            response.onResponse(str);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -57,12 +53,10 @@ public class Client {
         }).start();
     }
 
-    public void clientSendJump() {
-        String jump = "jump";
-        Gdx.app.log("Client", "clientSendJump");
-
+    public void sendToServer(String send) {
+        Gdx.app.log("Client", "send: " + send);
         try {
-            socket.getOutputStream().write(jump.getBytes());
+            socket.getOutputStream().write(send.getBytes());
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -1,6 +1,5 @@
 package com.asda.zombiex.net;
 
-import com.asda.zombiex.states.Play;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Net;
 import com.badlogic.gdx.net.ServerSocket;
@@ -14,41 +13,51 @@ import java.util.ArrayList;
  * @author Skala
  */
 public class Server {
-    private final static int PORT = 12203;
+    public final static int PORT = 12203;
 
     private ArrayList<Socket> clientSocket = new ArrayList<Socket>();
+    private Thread threadIncomingClients;
+    private Thread threadHandlingServer;
 
     // create a thread that will listen for incoming socket connections
-    public void startServer(final Play play, final String hostIp) {
-        new Thread(new Runnable() {
+    public void startServer() {
+        threadHandlingServer = new Thread(new Runnable() {
             @Override
             public void run() {
                 ServerSocketHints serverSocketHint = new ServerSocketHints();
                 serverSocketHint.acceptTimeout = 0;
 
                 ServerSocket serverSocket = Gdx.net.newServerSocket(Net.Protocol.TCP, PORT, serverSocketHint);
-                handleSockets();
 
                 while (true) {
                     Gdx.app.log("Server", "accept");
                     // Create a socket
                     Socket socketClient = serverSocket.accept(null);
-                    Gdx.app.log("Server", "Address: " + socketClient.getRemoteAddress());
+                    Gdx.app.log("Server", "Address: " + socketClient.getRemoteAddress()); // TODO: create new player
                     clientSocket.add(socketClient);
+                    // TODO: here should be send info actually game (in while join to game)
+                    createThreadServerIfNotExist();
                 }
             }
-        }).start();
+        });
+        threadHandlingServer.start();
+    }
+
+    private void createThreadServerIfNotExist() {
+        if (threadIncomingClients == null) {
+            handleSockets();
+        }
     }
 
     // Thread checking and sending date to others sockets
     private void handleSockets() {
-        new Thread(new Runnable() {
+        threadIncomingClients = new Thread(new Runnable() {
             @Override
             public void run() {
                 int indexSocket = 0;
                 while (true) {
                     if (clientSocket.isEmpty()) {
-                        Gdx.app.log("Server", "clientSocket: " + clientSocket.size());
+                        Gdx.app.log("Server", "clientSocket: " + clientSocket.size()); // without this log, thread doesn't work????
                         continue;
                     }
 
@@ -77,7 +86,8 @@ public class Server {
                     indexSocket = nextSocket(indexSocket);
                 }
             }
-        }).start();
+        });
+        threadIncomingClients.start();
     }
 
     private void sendDataSockets(byte[] bytes) {

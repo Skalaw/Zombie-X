@@ -8,6 +8,7 @@ import com.asda.zombiex.handlers.B2DVars;
 import com.asda.zombiex.handlers.GameContactListener;
 import com.asda.zombiex.handlers.GameStateManager;
 import com.asda.zombiex.net.Client;
+import com.asda.zombiex.net.Response;
 import com.asda.zombiex.net.Server;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
@@ -46,7 +47,7 @@ public class Play extends GameState {
     private ControllerPlayer controllerPlayer;
     private Array<Player> players;
     private Player actualPlayer;
-    private int actualPlayerInt;
+    private int actualPlayerInt; // TODO: remove in future, now is only for development
 
     private Array<Bullet> bullets;
     private Array<ParticleEffect> destroyBulletEffect;
@@ -126,10 +127,6 @@ public class Play extends GameState {
                     continue;
                 }
 
-                if (bits == B2DVars.BIT_GREEN_BLOCK) {
-                    fdef.restitution = 0.8f;
-                }
-
                 bdef.type = BodyDef.BodyType.StaticBody;
                 bdef.position.set((col + 0.5f) * tileSize / PPM, (row + 0.5f) * tileSize / PPM);
                 fdef.friction = 0;
@@ -139,6 +136,7 @@ public class Play extends GameState {
                 Fixture fixture = world.createBody(bdef).createFixture(fdef);
                 if (bits == B2DVars.BIT_GREEN_BLOCK) {
                     fixture.setUserData("block_green");
+                    fdef.restitution = 0.8f;
                 } else {
                     fixture.setUserData("block");
                 }
@@ -332,16 +330,11 @@ public class Play extends GameState {
         mapRenderer.dispose();
     }
 
-    public void setClient(String connectIp) {
-        client = new Client();
-        client.startClient(this, connectIp);
-    }
-
     public void setServer(final String hostIp) {
         server = new Server();
-        server.startServer(this, hostIp);
+        server.startServer();
 
-        Timer.schedule(new Timer.Task() {
+        Timer.schedule(new Timer.Task() { // delay to join server
             @Override
             public void run() {
                 setClient(hostIp);
@@ -349,7 +342,15 @@ public class Play extends GameState {
         }, 0.1f);
     }
 
-    public Player getActualPlayer() {
-        return actualPlayer;
+    public void setClient(String connectIp) {
+        client = new Client();
+        client.startClient(new Response() {
+            @Override
+            public void onResponse(String response) {
+                if (response.equals("jump")) {
+                    actualPlayer.jump();
+                }
+            }
+        }, connectIp);
     }
 }
