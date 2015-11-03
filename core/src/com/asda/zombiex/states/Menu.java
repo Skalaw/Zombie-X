@@ -66,6 +66,7 @@ public class Menu extends GameState {
             if (vec.x > buttonX && vec.x < buttonX + buttonSingle.getWidth()) {
                 if (vec.y > buttonSingleY && vec.y < buttonSingleY + buttonSingle.getHeight()) {
                     gsm.setState(GameStateManager.PLAY);
+                    gsm.setSinglePlayer();
                 }
             }
 

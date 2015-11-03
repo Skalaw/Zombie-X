@@ -13,13 +13,12 @@ import java.io.IOException;
 public class Client {
     private Socket socket;
     private Response response;
+    private String host;
 
     public void startClient(Response response, String host) {
         this.response = response;
+        this.host = host;
 
-        SocketHints socketHints = new SocketHints();
-
-        socket = Gdx.net.newClientSocket(Net.Protocol.TCP, host, Server.PORT, socketHints); // "127.0.0.1" - localhost
         handleSocket();
     }
 
@@ -28,6 +27,9 @@ public class Client {
         new Thread(new Runnable() {
             @Override
             public void run() {
+                SocketHints socketHints = new SocketHints();
+                socket = Gdx.net.newClientSocket(Net.Protocol.TCP, host, Server.PORT, socketHints); // "127.0.0.1" - localhost
+
                 while (true) {
                     int available = 0;
                     try {
@@ -41,7 +43,6 @@ public class Client {
                         try {
                             socket.getInputStream().read(buffer);
                             String str = new String(buffer, "UTF-8");
-                            Gdx.app.log("Client", socket.getRemoteAddress() + " get: " + str);
 
                             response.onResponse(str);
                         } catch (IOException e) {

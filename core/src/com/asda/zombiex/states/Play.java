@@ -3,6 +3,7 @@ package com.asda.zombiex.states;
 import com.asda.zombiex.Game;
 import com.asda.zombiex.entities.Bullet;
 import com.asda.zombiex.entities.ControllerPlayer;
+import com.asda.zombiex.entities.HandleInputListener;
 import com.asda.zombiex.entities.Player;
 import com.asda.zombiex.handlers.B2DVars;
 import com.asda.zombiex.handlers.GameContactListener;
@@ -10,6 +11,7 @@ import com.asda.zombiex.handlers.GameStateManager;
 import com.asda.zombiex.net.Client;
 import com.asda.zombiex.net.Response;
 import com.asda.zombiex.net.Server;
+import com.asda.zombiex.net.ServerCallback;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
@@ -27,7 +29,6 @@ import com.badlogic.gdx.physics.box2d.MassData;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.Timer;
 
 import static com.asda.zombiex.handlers.B2DVars.PPM;
 
@@ -44,10 +45,10 @@ public class Play extends GameState {
     private float tileSize;
     private OrthogonalTiledMapRenderer mapRenderer;
 
-    private ControllerPlayer controllerPlayer;
     private Array<Player> players;
     private Player actualPlayer;
-    private int actualPlayerInt; // TODO: remove in future, now is only for development
+    private ControllerPlayer controllerPlayer;
+    private HandleInputListener handleInputListener;
 
     private Array<Bullet> bullets;
     private Array<ParticleEffect> destroyBulletEffect;
@@ -62,16 +63,8 @@ public class Play extends GameState {
         createMap();
         bullets = new Array<Bullet>();
         players = new Array<Player>();
-
-        Player player = createPlayer(50 / PPM, (tileMapHeight - 6) * tileSize / PPM);
-        players.add(player);
-        actualPlayer = player;
-        player = createPlayer((tileMapWidth - 6) * tileSize / PPM, (tileMapHeight - 6) * tileSize / PPM);
-        players.add(player);
-
-        controllerPlayer = new ControllerPlayer(hudCam);
-
         destroyBulletEffect = new Array<ParticleEffect>();
+        controllerPlayer = new ControllerPlayer(hudCam);
     }
 
     private void createWorld() {
@@ -196,7 +189,7 @@ public class Play extends GameState {
         md.mass = 1f;
         body.setMassData(md);
 
-        Player player = new Player(body);
+        Player player = new Player(body, players.size);
         body.setUserData(player);
 
         return player;
@@ -212,32 +205,21 @@ public class Play extends GameState {
 
         float intensity = controllerPlayer.getAnalogIntensity();
         if (intensity != 0f) {
-            actualPlayer.moving(intensity);
+            handleInputListener.analogIntensity(intensity);
         }
 
         float angle = controllerPlayer.getAnalogAngle();
         if (angle != 0f) {
             float radian = angle * (float) Math.PI / 180;
-            actualPlayer.setViewfinderRadian(radian);
+            handleInputListener.analogRadian(radian);
         }
 
         if (controllerPlayer.isButtonJumpClicked()) {
-            actualPlayer.jump();
-            //client.clientSendJump(); // TODO: fixing this
+            handleInputListener.firstButtonClicked();
         }
 
         if (controllerPlayer.isButtonFireClicked()) {
-            if (actualPlayer.canShot()) {
-                Bullet bullet = actualPlayer.shot(world);
-                bullets.add(bullet);
-            }
-        }
-
-        if (controllerPlayer.isButtonChangePlayerClicked()) {
-            actualPlayerInt++;
-            actualPlayerInt %= players.size;
-
-            actualPlayer = players.get(actualPlayerInt);
+            handleInputListener.secondButtonClicked();
         }
     }
 
@@ -294,9 +276,11 @@ public class Play extends GameState {
         Gdx.gl20.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         // camera follow player TODO: set better position camera
-        cam.setPosition(actualPlayer.getPosition().x * PPM,
-                actualPlayer.getPosition().y * PPM);
-        cam.update();
+        if (actualPlayer != null) {
+            cam.setPosition(actualPlayer.getPosition().x * PPM,
+                    actualPlayer.getPosition().y * PPM);
+            cam.update();
+        }
 
         mapRenderer.setView(cam);
         mapRenderer.render();
@@ -330,16 +314,59 @@ public class Play extends GameState {
         mapRenderer.dispose();
     }
 
+    public void setSinglePlayer() {
+        Player player = createPlayer(50 / PPM, (tileMapHeight - 6) * tileSize / PPM);
+        players.add(player);
+        actualPlayer = player;
+
+        handleInputListener = new HandleInputListener() {
+            @Override
+            public void analogIntensity(float intensity) {
+                actualPlayer.moving(intensity);
+            }
+
+            @Override
+            public void analogRadian(float radian) {
+                actualPlayer.setViewfinderRadian(radian);
+            }
+
+            @Override
+            public void firstButtonClicked() {
+                actualPlayer.jump();
+            }
+
+            @Override
+            public void secondButtonClicked() {
+                if (actualPlayer.canShot()) {
+                    Bullet bullet = actualPlayer.shot(world);
+                    bullets.add(bullet);
+                }
+            }
+        };
+    }
+
     public void setServer(final String hostIp) {
         server = new Server();
-        server.startServer();
-
-        Timer.schedule(new Timer.Task() { // delay to join server
+        server.startServer(new ServerCallback() {
             @Override
-            public void run() {
+            public void serverReady() {
                 setClient(hostIp);
             }
-        }, 0.1f);
+
+            @Override
+            public void clientConnected(String remoteAddress) {
+                server.sendResponse(remoteAddress, "createPlayer:" + remoteAddress + "|");
+                server.sendResponse(remoteAddress, "IP:" + remoteAddress + " assignPlayer|");
+            }
+
+            @Override
+            public void initClient(String remoteAddress) {
+                // TODO: here should be send info actually game (in while join to game)
+                for (int i = 0; i < players.size; i++) {
+                    server.sendResponse(remoteAddress, "IP:" + remoteAddress + " createPlayer:" + players.get(i).getName() + "|");
+                }
+            }
+        });
     }
 
     public void setClient(String connectIp) {
@@ -347,10 +374,86 @@ public class Play extends GameState {
         client.startClient(new Response() {
             @Override
             public void onResponse(String response) {
-                if (response.equals("jump")) {
-                    actualPlayer.jump();
+                int firstChar = 0;
+                int lastChar = response.indexOf("|");
+                while (lastChar != -1) {
+                    String splitResponse = response.substring(firstChar, lastChar);
+                    firstChar = lastChar + 1;
+                    lastChar = response.indexOf("|", firstChar);
+                    parser(splitResponse);
                 }
             }
         }, connectIp);
+
+        handleInputListener = new HandleInputListener() {
+            @Override
+            public void analogIntensity(float intensity) {
+                client.sendToServer("moving: " + intensity + "|");
+            }
+
+            @Override
+            public void analogRadian(float radian) {
+                client.sendToServer("radian: " + radian + "|");
+            }
+
+            @Override
+            public void firstButtonClicked() {
+                client.sendToServer("jump|");
+            }
+
+            @Override
+            public void secondButtonClicked() {
+                client.sendToServer("fire|");
+            }
+        };
+    }
+
+    // TODO: refactor this
+    private void parser(String response) {
+        if (response.startsWith("client:")) {
+            int firstIndex = response.indexOf(":");
+            int lastIndex = response.indexOf(" ");
+            String remoteAddress = response.substring(firstIndex + 1, lastIndex);
+            String action = response.substring(lastIndex + 1);
+
+            Gdx.app.log("playerMoveParser", "remoteAddress: " + remoteAddress + " action: " + action);
+            Player clientPlayer = searchPlayerByName(remoteAddress);
+
+            if (action.startsWith("createPlayer")) {
+                firstIndex = action.indexOf(":");
+                String namePlayer = action.substring(firstIndex + 1);
+                Gdx.app.log("namePlayer", "namePlayer: " + namePlayer);
+
+                Player player = createPlayer(50 / PPM, (tileMapHeight - 6) * tileSize / PPM);
+                player.setName(namePlayer);
+                players.add(player);
+            } else if (action.equals("jump")) {
+                clientPlayer.jump();
+            } else if (action.startsWith("radian: ")) {
+                String value = action.replace("radian: ", "");
+                float radian = (float) Double.parseDouble(value);
+                clientPlayer.setViewfinderRadian(radian);
+            } else if (action.startsWith("moving: ")) {
+                String value = action.replace("moving: ", "");
+                float intensity = (float) Double.parseDouble(value);
+                clientPlayer.moving(intensity);
+            } else if (action.equals("fire")) {
+                if (clientPlayer.canShot()) {
+                    Bullet bullet = clientPlayer.shot(world);
+                    bullets.add(bullet);
+                }
+            } else if (action.equals("assignPlayer")) {
+                actualPlayer = players.get(players.size - 1);
+            }
+        }
+    }
+
+    private Player searchPlayerByName(String remoteAddress) {
+        for (int i = 0; i < players.size; i++) {
+            if (players.get(i).getName().equals(remoteAddress)) {
+                return players.get(i);
+            }
+        }
+        return null;
     }
 }

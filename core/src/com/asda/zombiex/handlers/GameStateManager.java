@@ -56,6 +56,10 @@ public class GameStateManager {
         return game;
     }
 
+    public void setSinglePlayer() {
+        ((Play) gameStates.peek()).setSinglePlayer();
+    }
+
     public void setServer(String hostIp) {
         ((Play) gameStates.peek()).setServer(hostIp);
     }

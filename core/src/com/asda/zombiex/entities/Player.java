@@ -21,14 +21,22 @@ import static com.asda.zombiex.handlers.B2DVars.PPM;
 public class Player extends B2DSprite {
     private final static float SHOT_RATE = 0.3f;
 
+    private String name = "";
     private Viewfinder viewfinder;
     private float shotTime = 0f;
     private float actualTime = 0;
 
-    public Player(Body body) {
+    public Player(Body body, int countPlayers) {
         super(body);
 
-        Texture tex = Game.res.getTexture("jenkins");
+        Texture tex;
+        if (countPlayers % 3 == 0) {
+            tex = Game.res.getTexture("jenkins");
+        } else if (countPlayers % 3 == 1) {
+            tex = Game.res.getTexture("jenkins2");
+        } else {
+            tex = Game.res.getTexture("jenkins3");
+        }
         TextureRegion sprite = new TextureRegion(tex, 0, 0, 25, 50);
 
         viewfinder = new Viewfinder(body, 25, 50);
@@ -130,5 +138,13 @@ public class Player extends B2DSprite {
 
     public void setViewfinderRadian(float radian) {
         viewfinder.setRadian(radian);
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }
