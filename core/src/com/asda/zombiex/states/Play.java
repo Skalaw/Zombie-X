@@ -373,15 +373,20 @@ public class Play extends GameState {
         client = new Client();
         client.startClient(new Response() {
             @Override
-            public void onResponse(String response) {
-                int firstChar = 0;
-                int lastChar = response.indexOf("|");
-                while (lastChar != -1) {
-                    String splitResponse = response.substring(firstChar, lastChar);
-                    firstChar = lastChar + 1;
-                    lastChar = response.indexOf("|", firstChar);
-                    parser(splitResponse);
-                }
+            public void onResponse(final String response) {
+                Gdx.app.postRunnable(new Runnable() {
+                    @Override
+                    public void run() {
+                        int firstChar = 0;
+                        int lastChar = response.indexOf("|");
+                        while (lastChar != -1) {
+                            String splitResponse = response.substring(firstChar, lastChar);
+                            firstChar = lastChar + 1;
+                            lastChar = response.indexOf("|", firstChar);
+                            parser(splitResponse);
+                        }
+                    }
+                });
             }
         }, connectIp);
 
