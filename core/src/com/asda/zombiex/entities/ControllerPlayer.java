@@ -3,9 +3,11 @@ package com.asda.zombiex.entities;
 import com.asda.zombiex.Game;
 import com.asda.zombiex.handlers.InputController;
 import com.asda.zombiex.handlers.InputKeys;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector3;
 
@@ -26,6 +28,8 @@ public class ControllerPlayer {
     private int buttonJumpX; // TODO: create class button
     private int buttonFireY;
 
+    private BitmapFont font;
+
     public ControllerPlayer(OrthographicCamera cam) {
         this.cam = cam;
 
@@ -36,6 +40,8 @@ public class ControllerPlayer {
         buttonFireY = buttonFire.getHeight();
 
         vec = new Vector3();
+        font = new BitmapFont();
+        font.setColor(1f, 1f, 1f, 1f);
     }
 
     public void render(SpriteBatch sb) {
@@ -46,6 +52,7 @@ public class ControllerPlayer {
         sb.draw(buttonAnalog, 0, 0);
         sb.draw(buttonJump, buttonJumpX, 0);
         sb.draw(buttonFire, buttonJumpX, buttonFireY);
+        font.draw(sb, "FPS: " + Gdx.graphics.getFramesPerSecond(), 1, Game.V_HEIGHT);
         sb.end();
 
         sb.setColor(c.r, c.g, c.b, 1f);

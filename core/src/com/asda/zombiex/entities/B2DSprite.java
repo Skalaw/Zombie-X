@@ -51,6 +51,10 @@ public class B2DSprite {
         return body.getPosition();
     }
 
+    public void setPosition(Vector2 position) {
+        body.setTransform(position, 0);
+    }
+
     public float getWidth() {
         return width;
     }

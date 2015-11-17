@@ -5,6 +5,7 @@ import com.badlogic.gdx.Net;
 import com.badlogic.gdx.net.ServerSocket;
 import com.badlogic.gdx.net.ServerSocketHints;
 import com.badlogic.gdx.net.Socket;
+import com.badlogic.gdx.utils.Array;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ public class Server {
     private Thread threadIncomingClients;
     private Thread threadHandlingServer;
     private ServerCallback serverCallback;
+    private Array<String> requests = new Array<String>();
 
     // create a thread that will listen for incoming socket connections
     public void startServer(ServerCallback callback) {
@@ -83,9 +85,13 @@ public class Server {
                         try {
                             socket.getInputStream().read(buffer);
                             String str = new String(buffer, "UTF-8");
-                            Gdx.app.log("Server", socket.getRemoteAddress() + " send: " + str);
+                            Array<String> splitedRequest = splitRequest(str);
+                            /*requests.addAll(splitedRequest);
+                            if (indexSocket == clientSocket.size() - 1) {
+                                serverCallback.request(socket.getRemoteAddress(), requests);
+                            }*/
 
-                            sendSplitResponse(socket.getRemoteAddress(), str);
+                            serverCallback.request(socket.getRemoteAddress(), splitedRequest);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -98,15 +104,17 @@ public class Server {
         threadIncomingClients.start();
     }
 
-    private void sendSplitResponse(String remoteAddress, String response) {
+    private Array<String> splitRequest(String response) {
+        Array<String> splitedResponse = new Array<String>();
         int firstChar = 0;
         int lastChar = response.indexOf("|");
         while (lastChar != -1) {
             String responseTask = response.substring(firstChar, lastChar + 1);
             firstChar = lastChar + 1;
             lastChar = response.indexOf("|", firstChar);
-            sendResponse(remoteAddress, responseTask);
+            splitedResponse.add(responseTask);
         }
+        return splitedResponse;
     }
 
     public void sendResponse(String remoteAddress, String simpleTask) {
@@ -125,7 +133,7 @@ public class Server {
         }
     }
 
-    private void sendDataSocket(String remoteIp, byte[] bytes) {
+    public void sendDataSocket(String remoteIp, byte[] bytes) {
         for (int i = 0; i < clientSocket.size(); i++) {
             Socket socket = clientSocket.get(i);
 
@@ -139,7 +147,7 @@ public class Server {
         }
     }
 
-    private void sendDataSockets(byte[] bytes) {
+    public void sendDataSockets(byte[] bytes) {
         for (int i = 0; i < clientSocket.size(); i++) {
             Socket socket = clientSocket.get(i);
             try {

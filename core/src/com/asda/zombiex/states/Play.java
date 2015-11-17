@@ -9,9 +9,10 @@ import com.asda.zombiex.handlers.B2DVars;
 import com.asda.zombiex.handlers.GameContactListener;
 import com.asda.zombiex.handlers.GameStateManager;
 import com.asda.zombiex.net.Client;
-import com.asda.zombiex.net.Response;
+import com.asda.zombiex.net.ClientCallback;
 import com.asda.zombiex.net.Server;
 import com.asda.zombiex.net.ServerCallback;
+import com.asda.zombiex.utils.StringUtils;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
@@ -166,7 +167,7 @@ public class Play extends GameState {
         cs.dispose();
     }
 
-    private Player createPlayer(float posX, float posY) {
+    private Player createPlayer(String namePlayer, float posX, float posY) {
         BodyDef bdef = new BodyDef();
         bdef.position.set(posX, posY);
         bdef.type = BodyDef.BodyType.DynamicBody;
@@ -190,6 +191,7 @@ public class Play extends GameState {
         body.setMassData(md);
 
         Player player = new Player(body, players.size);
+        player.setName(namePlayer);
         body.setUserData(player);
 
         return player;
@@ -238,6 +240,8 @@ public class Play extends GameState {
         for (int i = 0; i < bullets.size; i++) {
             bullets.get(i).update(dt);
         }
+
+        sendDataFromServer();
     }
 
     private void removeBullets() {
@@ -315,7 +319,7 @@ public class Play extends GameState {
     }
 
     public void setSinglePlayer() {
-        Player player = createPlayer(50 / PPM, (tileMapHeight - 6) * tileSize / PPM);
+        Player player = createPlayer("SinglePlayer", 50 / PPM, (tileMapHeight - 6) * tileSize / PPM);
         players.add(player);
         actualPlayer = player;
 
@@ -351,39 +355,52 @@ public class Play extends GameState {
             @Override
             public void serverReady() {
                 setClient(hostIp);
+                world.setGravity(new Vector2(0f, -5f));
             }
 
             @Override
             public void clientConnected(String remoteAddress) {
-                server.sendResponse(remoteAddress, "createPlayer:" + remoteAddress + "|");
-                server.sendResponse(remoteAddress, "IP:" + remoteAddress + " assignPlayer|");
+                server.sendResponse(remoteAddress, StringUtils.append("createPlayer:", remoteAddress, "|"));
+                server.sendResponse(remoteAddress, StringUtils.append("IP:", remoteAddress, " assignPlayer|"));
             }
 
             @Override
             public void initClient(String remoteAddress) {
                 // TODO: here should be send info actually game (in while join to game)
+
+                String directIp = "IP:" + remoteAddress;
                 for (int i = 0; i < players.size; i++) {
-                    server.sendResponse(remoteAddress, "IP:" + remoteAddress + " createPlayer:" + players.get(i).getName() + "|");
+                    server.sendResponse(remoteAddress, directIp + " createPlayer:" + players.get(i).getName() + "|");
                 }
+            }
+
+            @Override
+            public void request(final String remoteAddress, final Array<String> request) {
+                Gdx.app.postRunnable(new Runnable() {
+                    @Override
+                    public void run() {
+                        for (int i = 0; i < request.size; i++) {
+                            parserServer(remoteAddress, request.get(i));
+                        }
+                    }
+                });
             }
         });
     }
 
     public void setClient(String connectIp) {
+        world.setGravity(new Vector2(0f, 0f));
         client = new Client();
-        client.startClient(new Response() {
+        client.startClient(new ClientCallback() {
             @Override
             public void onResponse(final String response) {
+                final Array<String> responses = splitResponse(response);
+
                 Gdx.app.postRunnable(new Runnable() {
                     @Override
                     public void run() {
-                        int firstChar = 0;
-                        int lastChar = response.indexOf("|");
-                        while (lastChar != -1) {
-                            String splitResponse = response.substring(firstChar, lastChar);
-                            firstChar = lastChar + 1;
-                            lastChar = response.indexOf("|", firstChar);
-                            parser(splitResponse);
+                        for (int i = 0; i < responses.size; i++) {
+                            parserClient(responses.get(i));
                         }
                     }
                 });
@@ -413,15 +430,81 @@ public class Play extends GameState {
         };
     }
 
+    private Array<String> splitResponse(String response) {
+        Array<String> responses = new Array<String>();
+
+        int firstChar = 0;
+        int lastChar = response.indexOf("|");
+        while (lastChar != -1) {
+            String splitResponse = response.substring(firstChar, lastChar);
+            firstChar = lastChar + 1;
+            lastChar = response.indexOf("|", firstChar);
+            responses.add(splitResponse);
+        }
+        return responses;
+    }
+
+    private void sendDataFromServer() {
+        if (server == null) {
+            return;
+        }
+
+        for (int i = 0; i < players.size; i++) {
+            Player player = players.get(i);
+
+            //players.get(0).getBody().getLinearVelocity()
+            String sendPosition = StringUtils.append("position: ", player.getPosition().toString(), "|");
+            server.sendResponse(player.getName(), sendPosition);
+        }
+    }
+
+    private void parserServer(String remoteAddress, String request) {
+        if (request.startsWith("IP:")) {
+            int charEnd = request.indexOf(" ");
+            String recipientAddress = request.substring(3, charEnd);
+            request = request.substring(charEnd + 1);
+            request = "client:" + remoteAddress + " " + request;
+            server.sendDataSocket(recipientAddress, request.getBytes());
+        } else {
+            Player clientPlayer = searchPlayerByName(remoteAddress);
+
+            request = request.substring(0, request.length() - 1);
+
+            if (request.equals("jump")) {
+                clientPlayer.jump();
+            } else if (request.startsWith("radian: ")) {
+                String value = request.replace("radian: ", "");
+                float radian = (float) Double.parseDouble(value);
+                clientPlayer.setViewfinderRadian(radian);
+
+                StringBuilder sendViewFinder = new StringBuilder();
+                sendViewFinder.append(request);
+                sendViewFinder.append("|");
+                server.sendResponse(remoteAddress, sendViewFinder.toString());
+
+            } else if (request.startsWith("moving: ")) {
+                String value = request.replace("moving: ", "");
+                float intensity = (float) Double.parseDouble(value);
+                clientPlayer.moving(intensity);
+            } else if (request.equals("fire")) {
+                if (clientPlayer.canShot()) {
+                    Bullet bullet = clientPlayer.shot(world);
+                    bullets.add(bullet);
+                }
+            }
+        }
+    }
+
+    private Vector2 tempVector2 = new Vector2();
+
     // TODO: refactor this
-    private void parser(String response) {
+    private void parserClient(String response) {
         if (response.startsWith("client:")) {
             int firstIndex = response.indexOf(":");
             int lastIndex = response.indexOf(" ");
             String remoteAddress = response.substring(firstIndex + 1, lastIndex);
             String action = response.substring(lastIndex + 1);
 
-            Gdx.app.log("playerMoveParser", "remoteAddress: " + remoteAddress + " action: " + action);
             Player clientPlayer = searchPlayerByName(remoteAddress);
 
             if (action.startsWith("createPlayer")) {
@@ -429,26 +512,26 @@ public class Play extends GameState {
                 String namePlayer = action.substring(firstIndex + 1);
                 Gdx.app.log("namePlayer", "namePlayer: " + namePlayer);
 
-                Player player = createPlayer(50 / PPM, (tileMapHeight - 6) * tileSize / PPM);
-                player.setName(namePlayer);
+                Player player = createPlayer(namePlayer, 50 / PPM, (tileMapHeight - 6) * tileSize / PPM);
                 players.add(player);
-            } else if (action.equals("jump")) {
-                clientPlayer.jump();
+            } else if (action.equals("assignPlayer")) {
+                actualPlayer = players.get(players.size - 1);
+            } else if (action.startsWith("position: ")) {
+                if (clientPlayer == null) {
+                    return;
+                }
+
+                String value = action.replace("position: ", "");
+
+                clientPlayer.setPosition(tempVector2.fromString(value));
             } else if (action.startsWith("radian: ")) {
+                if (clientPlayer == null) {
+                    return;
+                }
+
                 String value = action.replace("radian: ", "");
                 float radian = (float) Double.parseDouble(value);
                 clientPlayer.setViewfinderRadian(radian);
-            } else if (action.startsWith("moving: ")) {
-                String value = action.replace("moving: ", "");
-                float intensity = (float) Double.parseDouble(value);
-                clientPlayer.moving(intensity);
-            } else if (action.equals("fire")) {
-                if (clientPlayer.canShot()) {
-                    Bullet bullet = clientPlayer.shot(world);
-                    bullets.add(bullet);
-                }
-            } else if (action.equals("assignPlayer")) {
-                actualPlayer = players.get(players.size - 1);
             }
         }
     }

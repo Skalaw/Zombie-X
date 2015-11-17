@@ -3,6 +3,6 @@ package com.asda.zombiex.net;
 /**
  * @author Skala
  */
-public interface Response {
+public interface ClientCallback {
     void onResponse(String response);
 }

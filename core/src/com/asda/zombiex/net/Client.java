@@ -12,11 +12,11 @@ import java.io.IOException;
  */
 public class Client {
     private Socket socket;
-    private Response response;
+    private ClientCallback clientCallback;
     private String host;
 
-    public void startClient(Response response, String host) {
-        this.response = response;
+    public void startClient(ClientCallback clientCallback, String host) {
+        this.clientCallback = clientCallback;
         this.host = host;
 
         handleSocket();
@@ -44,7 +44,7 @@ public class Client {
                             socket.getInputStream().read(buffer);
                             String str = new String(buffer, "UTF-8");
 
-                            response.onResponse(str);
+                            clientCallback.onResponse(str);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
