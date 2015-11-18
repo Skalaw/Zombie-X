@@ -6,11 +6,16 @@ import com.badlogic.gdx.net.Socket;
 import com.badlogic.gdx.net.SocketHints;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * @author Skala
  */
 public class Client {
+    private static ExecutorService executorReceiver = Executors.newSingleThreadExecutor();
+    private static ExecutorService executorRequest = Executors.newSingleThreadExecutor();
+
     private Socket socket;
     private ClientCallback clientCallback;
     private String host;
@@ -24,7 +29,7 @@ public class Client {
 
     // create a thread that will listen data from incoming server
     private void handleSocket() {
-        new Thread(new Runnable() {
+        executorReceiver.execute(new Runnable() {
             @Override
             public void run() {
                 SocketHints socketHints = new SocketHints();
@@ -51,15 +56,19 @@ public class Client {
                     }
                 }
             }
-        }).start();
+        });
     }
 
-    public void sendToServer(String send) {
-        Gdx.app.log("Client", "send: " + send);
-        try {
-            socket.getOutputStream().write(send.getBytes());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public void sendToServer(final String send) {
+        executorRequest.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    socket.getOutputStream().write(send.getBytes());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 }

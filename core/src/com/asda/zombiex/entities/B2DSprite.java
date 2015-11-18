@@ -55,6 +55,10 @@ public class B2DSprite {
         body.setTransform(position, 0);
     }
 
+    public void setVelocity(Vector2 velocity) {
+        body.setLinearVelocity(velocity);
+    }
+
     public float getWidth() {
         return width;
     }

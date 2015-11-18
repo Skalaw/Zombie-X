@@ -355,7 +355,6 @@ public class Play extends GameState {
             @Override
             public void serverReady() {
                 setClient(hostIp);
-                world.setGravity(new Vector2(0f, -5f));
             }
 
             @Override
@@ -389,7 +388,6 @@ public class Play extends GameState {
     }
 
     public void setClient(String connectIp) {
-        world.setGravity(new Vector2(0f, 0f));
         client = new Client();
         client.startClient(new ClientCallback() {
             @Override
@@ -452,9 +450,11 @@ public class Play extends GameState {
         for (int i = 0; i < players.size; i++) {
             Player player = players.get(i);
 
-            //players.get(0).getBody().getLinearVelocity()
             String sendPosition = StringUtils.append("position: ", player.getPosition().toString(), "|");
             server.sendResponse(player.getName(), sendPosition);
+
+            String sendVelocty = StringUtils.append("velocity: ", player.getBody().getLinearVelocity().toString(), "|");
+            server.sendResponse(player.getName(), sendVelocty);
         }
     }
 
@@ -490,6 +490,8 @@ public class Play extends GameState {
                 if (clientPlayer.canShot()) {
                     Bullet bullet = clientPlayer.shot(world);
                     bullets.add(bullet);
+
+                    server.sendResponse(remoteAddress, request + "|");
                 }
             }
         }
@@ -516,6 +518,8 @@ public class Play extends GameState {
                 players.add(player);
             } else if (action.equals("assignPlayer")) {
                 actualPlayer = players.get(players.size - 1);
+            } else if (server != null) {
+                return;
             } else if (action.startsWith("position: ")) {
                 if (clientPlayer == null) {
                     return;
@@ -532,6 +536,20 @@ public class Play extends GameState {
                 String value = action.replace("radian: ", "");
                 float radian = (float) Double.parseDouble(value);
                 clientPlayer.setViewfinderRadian(radian);
+            } else if (action.equals("fire")) {
+                if (clientPlayer == null) {
+                    return;
+                }
+
+                Bullet bullet = clientPlayer.shot(world);
+                bullets.add(bullet);
+            } else if (action.startsWith("velocity: ")) {
+                if (clientPlayer == null) {
+                    return;
+                }
+
+                String value = action.replace("velocity: ", "");
+                clientPlayer.setVelocity(tempVector2.fromString(value));
             }
         }
     }

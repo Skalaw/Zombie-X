@@ -9,6 +9,8 @@ import com.badlogic.gdx.utils.Array;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * @author Skala
@@ -16,17 +18,17 @@ import java.util.ArrayList;
 public class Server {
     public final static int PORT = 12203;
 
+    private static ExecutorService executorServer = Executors.newSingleThreadExecutor();
+    private static ExecutorService executorClients = Executors.newFixedThreadPool(8); // 8 - max players
+
     private ArrayList<Socket> clientSocket = new ArrayList<Socket>();
-    private Thread threadIncomingClients;
-    private Thread threadHandlingServer;
     private ServerCallback serverCallback;
-    private Array<String> requests = new Array<String>();
 
     // create a thread that will listen for incoming socket connections
     public void startServer(ServerCallback callback) {
         serverCallback = callback;
 
-        threadHandlingServer = new Thread(new Runnable() {
+        executorServer.execute(new Runnable() {
             @Override
             public void run() {
                 ServerSocketHints serverSocketHint = new ServerSocketHints();
@@ -43,36 +45,18 @@ public class Server {
                     Gdx.app.log("Server", "Address: " + remoteAddress + " is connected");
                     serverCallback.initClient(remoteAddress);
                     serverCallback.clientConnected(remoteAddress);
-                    createThreadServerIfNotExist();
+                    handleSockets(socketClient);
                 }
             }
         });
-        threadHandlingServer.start();
-    }
-
-    private void createThreadServerIfNotExist() {
-        if (threadIncomingClients == null) {
-            handleSockets();
-        }
     }
 
     // Thread checking and sending date to others sockets
-    private void handleSockets() {
-        threadIncomingClients = new Thread(new Runnable() {
+    private void handleSockets(final Socket socket) {
+        executorClients.execute(new Runnable() {
             @Override
             public void run() {
-                int indexSocket = 0;
                 while (true) {
-                    if (clientSocket.isEmpty()) {
-                        Gdx.app.log("Server", "clientSocket: " + clientSocket.size()); // without this log, thread doesn't work????
-                        continue;
-                    }
-
-                    Socket socket = clientSocket.get(indexSocket);
-                    if (socket == null) {
-                        continue;
-                    }
-
                     int available = 0;
                     try {
                         available = socket.getInputStream().available();
@@ -86,22 +70,15 @@ public class Server {
                             socket.getInputStream().read(buffer);
                             String str = new String(buffer, "UTF-8");
                             Array<String> splitedRequest = splitRequest(str);
-                            /*requests.addAll(splitedRequest);
-                            if (indexSocket == clientSocket.size() - 1) {
-                                serverCallback.request(socket.getRemoteAddress(), requests);
-                            }*/
 
                             serverCallback.request(socket.getRemoteAddress(), splitedRequest);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
                     }
-
-                    indexSocket = nextSocket(indexSocket);
                 }
             }
         });
-        threadIncomingClients.start();
     }
 
     private Array<String> splitRequest(String response) {
@@ -156,11 +133,5 @@ public class Server {
                 e.printStackTrace();
             }
         }
-    }
-
-    private int nextSocket(int indexSocket) {
-        indexSocket++;
-        indexSocket %= clientSocket.size();
-        return indexSocket;
     }
 }
