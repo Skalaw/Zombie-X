@@ -43,6 +43,14 @@ public class GameContactListener implements ContactListener {
         if (fb.getUserData().equals("bullet") && fa.getUserData().equals("border")) {
             bodiesToRemove.add(fb.getBody());
         }
+
+        if (fa.getUserData().equals("bullet") && fb.getUserData().equals("player")) {
+            bodiesToRemove.add(fa.getBody());
+        }
+
+        if (fb.getUserData().equals("bullet") && fa.getUserData().equals("player")) {
+            bodiesToRemove.add(fb.getBody());
+        }
     }
 
     @Override

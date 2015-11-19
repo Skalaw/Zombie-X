@@ -8,9 +8,9 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
+import com.badlogic.gdx.physics.box2d.CircleShape;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.MassData;
-import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
 
 import static com.asda.zombiex.handlers.B2DVars.PPM;
@@ -97,20 +97,29 @@ public class Player extends B2DSprite {
     public Bullet shot(World world) {
         shotTime = actualTime;
 
+        float power = 4.5f;
+        float radian = viewfinder.getRadian();
+        float dx = (float) -Math.cos(radian) * power;
+        float dy = (float) Math.sin(radian) * power;
+
+        float posX = body.getPosition().x + (float) -Math.cos(radian) * 33 / PPM; // distance bullet from player TODO: fix
+        float posY = body.getPosition().y + (float) Math.sin(radian) * 33 / PPM; // distance bullet from player TODO: fix
+
         BodyDef bdef = new BodyDef();
-        bdef.position.set(body.getPosition());
+        bdef.position.set(posX, posY);
+
         bdef.type = BodyDef.BodyType.DynamicBody;
 
         Body body = world.createBody(bdef);
 
-        PolygonShape shape = new PolygonShape();
-        shape.setAsBox(4f / PPM, 4f / PPM);
+        CircleShape shape = new CircleShape();
+        shape.setRadius(4f / PPM);
         FixtureDef fdef = new FixtureDef();
         fdef.shape = shape;
         fdef.density = 1f;
         fdef.restitution = 0.2f;
         fdef.filter.categoryBits = B2DVars.BIT_BULLET;
-        fdef.filter.maskBits = B2DVars.BIT_RED_BLOCK | B2DVars.BIT_GREEN_BLOCK | B2DVars.BIT_BLUE_BLOCK | B2DVars.BIT_YELLOW_BLOCK | B2DVars.BIT_BORDER;
+        fdef.filter.maskBits = B2DVars.BIT_RED_BLOCK | B2DVars.BIT_GREEN_BLOCK | B2DVars.BIT_BLUE_BLOCK | B2DVars.BIT_YELLOW_BLOCK | B2DVars.BIT_BORDER | B2DVars.BIT_PLAYER;
         body.createFixture(fdef).setUserData("bullet");
         shape.dispose();
 
@@ -120,14 +129,7 @@ public class Player extends B2DSprite {
         MassData md = body.getMassData();
         md.mass = 1f;
         body.setMassData(md);
-
-        float power = 4.5f;
-        float radian = viewfinder.getRadian();
-        float dx = (float) -Math.cos(radian) * power;
-        float dy = (float) Math.sin(radian) * power;
-
-        Vector2 pos = body.getPosition();
-        body.applyLinearImpulse(dx, dy, pos.x, pos.y, true);
+        body.applyLinearImpulse(dx, dy, posX, posY, true);
 
         return bullet;
     }

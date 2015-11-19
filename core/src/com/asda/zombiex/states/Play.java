@@ -182,7 +182,7 @@ public class Play extends GameState {
         fdef.density = 1f;
         fdef.friction = 0;
         fdef.filter.categoryBits = B2DVars.BIT_PLAYER;
-        fdef.filter.maskBits = B2DVars.BIT_RED_BLOCK | B2DVars.BIT_GREEN_BLOCK | B2DVars.BIT_BLUE_BLOCK | B2DVars.BIT_YELLOW_BLOCK | B2DVars.BIT_BORDER;
+        fdef.filter.maskBits = B2DVars.BIT_RED_BLOCK | B2DVars.BIT_GREEN_BLOCK | B2DVars.BIT_BLUE_BLOCK | B2DVars.BIT_YELLOW_BLOCK | B2DVars.BIT_BORDER | B2DVars.BIT_BULLET;
         body.createFixture(fdef).setUserData("player");
         shape.dispose();
 
