@@ -15,7 +15,7 @@
  </layer>
  <layer name="yellow" width="40" height="32">
   <data encoding="base64" compression="zlib">
-   eJzt1cEJAAAIA7GC++/sEj4KJnAzXMIHUxYAtLh8l88BANBoAR9/AJE=
+   eJzt1iEOADAIA0AS/v/n+Vm6THCXYCtbqtigh5fKufMA4Lfkdtk5IO3FH62rAPY5I88AnQ==
   </data>
  </layer>
  <layer name="blue" width="40" height="32">
@@ -23,4 +23,12 @@
    eJztw6ENAAAIA7AJ/r+ZByaQiDZpAgDA1ZQAAPDZAuqwABU=
   </data>
  </layer>
+ <objectgroup name="respawn" width="40" height="32">
+  <object x="84" y="311"/>
+  <object x="259" y="741"/>
+  <object x="759" y="716"/>
+  <object x="908" y="39"/>
+  <object x="461" y="137"/>
+  <object x="987" y="313"/>
+ </objectgroup>
 </map>

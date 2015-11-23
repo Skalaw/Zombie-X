@@ -8,6 +8,7 @@ import com.asda.zombiex.entities.Player;
 import com.asda.zombiex.handlers.B2DVars;
 import com.asda.zombiex.handlers.GameContactListener;
 import com.asda.zombiex.handlers.GameStateManager;
+import com.asda.zombiex.handlers.RespawnPoints;
 import com.asda.zombiex.net.Client;
 import com.asda.zombiex.net.ClientCallback;
 import com.asda.zombiex.net.Server;
@@ -16,6 +17,9 @@ import com.asda.zombiex.utils.StringUtils;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
+import com.badlogic.gdx.maps.MapLayer;
+import com.badlogic.gdx.maps.MapObjects;
+import com.badlogic.gdx.maps.MapProperties;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
@@ -31,6 +35,8 @@ import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.utils.Array;
 
+import java.util.Random;
+
 import static com.asda.zombiex.handlers.B2DVars.PPM;
 
 /**
@@ -45,6 +51,7 @@ public class Play extends GameState {
     private int tileMapHeight;
     private float tileSize;
     private OrthogonalTiledMapRenderer mapRenderer;
+    private Array<RespawnPoints> respawns = new Array<RespawnPoints>();
 
     private Array<Player> players;
     private Player actualPlayer;
@@ -95,6 +102,7 @@ public class Play extends GameState {
         createBlocks(layer, B2DVars.BIT_YELLOW_BLOCK);
 
         createBorderMap();
+        createRespawnPoints(map.getLayers().get("respawn"));
     }
 
     private void createBlocks(TiledMapTileLayer layer, short bits) {
@@ -165,6 +173,29 @@ public class Play extends GameState {
         world.createBody(bdef).createFixture(fdef).setUserData("border");
 
         cs.dispose();
+    }
+
+    private void createRespawnPoints(MapLayer respawnPoints) {
+        if (respawnPoints == null) {
+            throw new RuntimeException("Map don't have respawn");
+        }
+
+        MapObjects respawnObjects = respawnPoints.getObjects();
+        int count = respawnObjects.getCount();
+        for (int i = 0; i < count; i++) {
+            MapProperties properties = respawnObjects.get(i).getProperties();
+            float x = (Float) properties.get("x") / PPM;
+            float y = (Float) properties.get("y") / PPM;
+
+            respawns.add(new RespawnPoints(x, y));
+        }
+    }
+
+    private Player createPlayer(String namePlayer) {
+        Random rand = new Random();
+        int random = rand.nextInt(respawns.size);
+        RespawnPoints respawnPoints = respawns.get(random);
+        return createPlayer(namePlayer, respawnPoints.getX(), respawnPoints.getY());
     }
 
     private Player createPlayer(String namePlayer, float posX, float posY) {
@@ -319,7 +350,7 @@ public class Play extends GameState {
     }
 
     public void setSinglePlayer() {
-        Player player = createPlayer("SinglePlayer", 50 / PPM, (tileMapHeight - 6) * tileSize / PPM);
+        Player player = createPlayer("SinglePlayer");
         players.add(player);
         actualPlayer = player;
 
@@ -514,7 +545,7 @@ public class Play extends GameState {
                 String namePlayer = action.substring(firstIndex + 1);
                 Gdx.app.log("namePlayer", "namePlayer: " + namePlayer);
 
-                Player player = createPlayer(namePlayer, 50 / PPM, (tileMapHeight - 6) * tileSize / PPM);
+                Player player = createPlayer(namePlayer);
                 players.add(player);
             } else if (action.equals("assignPlayer")) {
                 actualPlayer = players.get(players.size - 1);
