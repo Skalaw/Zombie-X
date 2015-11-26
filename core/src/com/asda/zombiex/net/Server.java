@@ -1,5 +1,6 @@
 package com.asda.zombiex.net;
 
+import com.asda.zombiex.utils.StringUtils;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Net;
 import com.badlogic.gdx.net.ServerSocket;
@@ -17,16 +18,19 @@ import java.util.concurrent.Executors;
  */
 public class Server {
     public final static int PORT = 12203;
+    private final static int MAX_PLAYERS = 8;
 
     private static ExecutorService executorServer = Executors.newSingleThreadExecutor();
-    private static ExecutorService executorClients = Executors.newFixedThreadPool(8); // 8 - max players
+    private static ExecutorService executorClients = Executors.newFixedThreadPool(MAX_PLAYERS);
 
     private ArrayList<Socket> clientSocket = new ArrayList<Socket>();
     private ServerCallback serverCallback;
+    private ClientRequestListener clientRequestListener;
 
     // create a thread that will listen for incoming socket connections
-    public void startServer(ServerCallback callback) {
+    public void startServer(ServerCallback callback, ClientRequestListener clientRequestListener) {
         serverCallback = callback;
+        this.clientRequestListener = clientRequestListener;
 
         executorServer.execute(new Runnable() {
             @Override
@@ -69,9 +73,8 @@ public class Server {
                         try {
                             socket.getInputStream().read(buffer);
                             String str = new String(buffer, "UTF-8");
-                            Array<String> splitedRequest = splitRequest(str);
-
-                            serverCallback.request(socket.getRemoteAddress(), splitedRequest);
+                            Array<String> splitedRequest = ParserUtils.splitRequest(str);
+                            parserServer(socket.getRemoteAddress(), splitedRequest);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -81,36 +84,17 @@ public class Server {
         });
     }
 
-    private Array<String> splitRequest(String response) {
-        Array<String> splitedResponse = new Array<String>();
-        int firstChar = 0;
-        int lastChar = response.indexOf("|");
-        while (lastChar != -1) {
-            String responseTask = response.substring(firstChar, lastChar + 1);
-            firstChar = lastChar + 1;
-            lastChar = response.indexOf("|", firstChar);
-            splitedResponse.add(responseTask);
-        }
-        return splitedResponse;
+    public void sendResponseClient(String remoteAddress, String simpleTask) {
+        simpleTask = StringUtils.append("client:", remoteAddress, " ", simpleTask);
+        sendDataSocket(remoteAddress, simpleTask.getBytes());
     }
 
-    public void sendResponse(String remoteAddress, String simpleTask) {
-        if (simpleTask.startsWith("IP:")) {
-            int charEnd = simpleTask.indexOf(" ");
-            String recipientAddress = simpleTask.substring(3, charEnd);
-            simpleTask = simpleTask.substring(charEnd + 1);
-
-            simpleTask = "client:" + remoteAddress + " " + simpleTask;
-
-            sendDataSocket(recipientAddress, simpleTask.getBytes());
-        } else {
-            simpleTask = "client:" + remoteAddress + " " + simpleTask;
-
-            sendDataSockets(simpleTask.getBytes());
-        }
+    public void sendResponseClients(String remoteAddress, String simpleTask) {
+        simpleTask = StringUtils.append("client:", remoteAddress, " ", simpleTask);
+        sendDataSockets(simpleTask.getBytes());
     }
 
-    public void sendDataSocket(String remoteIp, byte[] bytes) {
+    private void sendDataSocket(String remoteIp, byte[] bytes) {
         for (int i = 0; i < clientSocket.size(); i++) {
             Socket socket = clientSocket.get(i);
 
@@ -124,13 +108,47 @@ public class Server {
         }
     }
 
-    public void sendDataSockets(byte[] bytes) {
+    private void sendDataSockets(byte[] bytes) {
         for (int i = 0; i < clientSocket.size(); i++) {
             Socket socket = clientSocket.get(i);
             try {
                 socket.getOutputStream().write(bytes);
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+        }
+    }
+
+    private void parserServer(final String remoteAddress, final Array<String> request) {
+        Gdx.app.postRunnable(new Runnable() {
+            @Override
+            public void run() {
+                for (int i = 0; i < request.size; i++) {
+                    parserServer(remoteAddress, request.get(i));
+                }
+            }
+        });
+    }
+
+    private void parserServer(String remoteAddress, String request) {
+        String requestParse = request.substring(0, request.length() - 1);
+
+        if (requestParse.equals("jump")) {
+            clientRequestListener.firstButtonClicked(remoteAddress);
+        } else if (requestParse.startsWith("moving: ")) {
+            String value = requestParse.replace("moving: ", "");
+            float intensity = (float) Double.parseDouble(value);
+
+            clientRequestListener.analogIntensity(remoteAddress, intensity);
+        } else if (requestParse.startsWith("radian: ")) {
+            String value = requestParse.replace("radian: ", "");
+            float radian = (float) Double.parseDouble(value);
+            clientRequestListener.analogRadian(remoteAddress, radian);
+
+            sendResponseClients(remoteAddress, request);
+        } else if (requestParse.equals("fire")) {
+            if (clientRequestListener.secondButtonClicked(remoteAddress)) {
+                sendResponseClients(remoteAddress, request);
             }
         }
     }

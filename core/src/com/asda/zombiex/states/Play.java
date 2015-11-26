@@ -11,8 +11,10 @@ import com.asda.zombiex.handlers.GameStateManager;
 import com.asda.zombiex.handlers.RespawnPoints;
 import com.asda.zombiex.net.Client;
 import com.asda.zombiex.net.ClientCallback;
+import com.asda.zombiex.net.ClientRequestListener;
 import com.asda.zombiex.net.Server;
 import com.asda.zombiex.net.ServerCallback;
+import com.asda.zombiex.net.ServerResponseListener;
 import com.asda.zombiex.utils.StringUtils;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
@@ -333,8 +335,7 @@ public class Play extends GameState {
 
         sb.begin();
         for (int i = 0; i < destroyBulletEffect.size; i++) {
-            ParticleEffect particleEffect = destroyBulletEffect.get(i);
-            particleEffect.draw(sb, Gdx.graphics.getDeltaTime());
+            destroyBulletEffect.get(i).draw(sb, Gdx.graphics.getDeltaTime());
         }
         sb.end();
 
@@ -381,6 +382,38 @@ public class Play extends GameState {
     }
 
     public void setServer(final String hostIp) {
+        ClientRequestListener clientRequestListener = new ClientRequestListener() {
+            @Override
+            public void analogIntensity(String remoteAddress, float intensity) {
+                Player clientPlayer = searchPlayerByName(remoteAddress);
+                clientPlayer.moving(intensity);
+            }
+
+            @Override
+            public void analogRadian(String remoteAddress, float radian) {
+                Player clientPlayer = searchPlayerByName(remoteAddress);
+                clientPlayer.setViewfinderRadian(radian);
+            }
+
+            @Override
+            public void firstButtonClicked(String remoteAddress) {
+                Player clientPlayer = searchPlayerByName(remoteAddress);
+                clientPlayer.jump();
+            }
+
+            @Override
+            public boolean secondButtonClicked(String remoteAddress) {
+                Player clientPlayer = searchPlayerByName(remoteAddress);
+                if (clientPlayer.canShot()) {
+                    Bullet bullet = clientPlayer.shot(world);
+                    bullets.add(bullet);
+                    return true;
+                }
+
+                return false;
+            }
+        };
+
         server = new Server();
         server.startServer(new ServerCallback() {
             @Override
@@ -390,51 +423,79 @@ public class Play extends GameState {
 
             @Override
             public void clientConnected(String remoteAddress) {
-                server.sendResponse(remoteAddress, StringUtils.append("createPlayer:", remoteAddress, "|"));
-                server.sendResponse(remoteAddress, StringUtils.append("IP:", remoteAddress, " assignPlayer|"));
+                server.sendResponseClients(remoteAddress, StringUtils.append("createPlayer:", remoteAddress, "|"));
+                server.sendResponseClient(remoteAddress, "assignPlayer|");
             }
 
             @Override
             public void initClient(String remoteAddress) {
                 // TODO: here should be send info actually game (in while join to game)
 
-                String directIp = "IP:" + remoteAddress;
                 for (int i = 0; i < players.size; i++) {
-                    server.sendResponse(remoteAddress, directIp + " createPlayer:" + players.get(i).getName() + "|");
+                    server.sendResponseClient(remoteAddress, StringUtils.append("createPlayer:", players.get(i).getName(), "|"));
                 }
             }
-
-            @Override
-            public void request(final String remoteAddress, final Array<String> request) {
-                Gdx.app.postRunnable(new Runnable() {
-                    @Override
-                    public void run() {
-                        for (int i = 0; i < request.size; i++) {
-                            parserServer(remoteAddress, request.get(i));
-                        }
-                    }
-                });
-            }
-        });
+        }, clientRequestListener);
     }
 
     public void setClient(String connectIp) {
+        ServerResponseListener serverResponseListener = new ServerResponseListener() {
+            @Override
+            public void serverCreatePlayer(String namePlayer) {
+                Player player = createPlayer(namePlayer);
+                players.add(player);
+            }
+
+            @Override
+            public void serverAssignPlayer(String namePlayer) {
+                actualPlayer = searchPlayerByName(namePlayer);
+            }
+
+            @Override
+            public void serverPositionPlayer(String namePlayer, Vector2 value) {
+                if (server != null) {
+                    return;
+                }
+                Player clientPlayer = searchPlayerByName(namePlayer);
+                clientPlayer.setPosition(value);
+            }
+
+            @Override
+            public void serverViewfinderRadian(String namePlayer, float radian) {
+                if (server != null) {
+                    return;
+                }
+                Player clientPlayer = searchPlayerByName(namePlayer);
+                clientPlayer.setViewfinderRadian(radian);
+            }
+
+            @Override
+            public void serverShot(String namePlayer) {
+                if (server != null) {
+                    return;
+                }
+                Player clientPlayer = searchPlayerByName(namePlayer);
+                Bullet bullet = clientPlayer.shot(world);
+                bullets.add(bullet);
+            }
+
+            @Override
+            public void serverVelocityPlayer(String namePlayer, Vector2 value) {
+                if (server != null) {
+                    return;
+                }
+                Player clientPlayer = searchPlayerByName(namePlayer);
+                clientPlayer.setVelocity(value);
+            }
+        };
+
         client = new Client();
         client.startClient(new ClientCallback() {
             @Override
-            public void onResponse(final String response) {
-                final Array<String> responses = splitResponse(response);
+            public void onResponse(final Array<String> responses) {
 
-                Gdx.app.postRunnable(new Runnable() {
-                    @Override
-                    public void run() {
-                        for (int i = 0; i < responses.size; i++) {
-                            parserClient(responses.get(i));
-                        }
-                    }
-                });
             }
-        }, connectIp);
+        }, serverResponseListener, connectIp);
 
         handleInputListener = new HandleInputListener() {
             @Override
@@ -459,20 +520,6 @@ public class Play extends GameState {
         };
     }
 
-    private Array<String> splitResponse(String response) {
-        Array<String> responses = new Array<String>();
-
-        int firstChar = 0;
-        int lastChar = response.indexOf("|");
-        while (lastChar != -1) {
-            String splitResponse = response.substring(firstChar, lastChar);
-            firstChar = lastChar + 1;
-            lastChar = response.indexOf("|", firstChar);
-            responses.add(splitResponse);
-        }
-        return responses;
-    }
-
     private void sendDataFromServer() {
         if (server == null) {
             return;
@@ -481,107 +528,8 @@ public class Play extends GameState {
         for (int i = 0; i < players.size; i++) {
             Player player = players.get(i);
 
-            String sendPosition = StringUtils.append("position: ", player.getPosition().toString(), "|");
-            server.sendResponse(player.getName(), sendPosition);
-
-            String sendVelocty = StringUtils.append("velocity: ", player.getBody().getLinearVelocity().toString(), "|");
-            server.sendResponse(player.getName(), sendVelocty);
-        }
-    }
-
-    private void parserServer(String remoteAddress, String request) {
-        if (request.startsWith("IP:")) {
-            int charEnd = request.indexOf(" ");
-            String recipientAddress = request.substring(3, charEnd);
-            request = request.substring(charEnd + 1);
-            request = "client:" + remoteAddress + " " + request;
-            server.sendDataSocket(recipientAddress, request.getBytes());
-        } else {
-            Player clientPlayer = searchPlayerByName(remoteAddress);
-
-            request = request.substring(0, request.length() - 1);
-
-            if (request.equals("jump")) {
-                clientPlayer.jump();
-            } else if (request.startsWith("radian: ")) {
-                String value = request.replace("radian: ", "");
-                float radian = (float) Double.parseDouble(value);
-                clientPlayer.setViewfinderRadian(radian);
-
-                StringBuilder sendViewFinder = new StringBuilder();
-                sendViewFinder.append(request);
-                sendViewFinder.append("|");
-                server.sendResponse(remoteAddress, sendViewFinder.toString());
-
-            } else if (request.startsWith("moving: ")) {
-                String value = request.replace("moving: ", "");
-                float intensity = (float) Double.parseDouble(value);
-                clientPlayer.moving(intensity);
-            } else if (request.equals("fire")) {
-                if (clientPlayer.canShot()) {
-                    Bullet bullet = clientPlayer.shot(world);
-                    bullets.add(bullet);
-
-                    server.sendResponse(remoteAddress, request + "|");
-                }
-            }
-        }
-    }
-
-    private Vector2 tempVector2 = new Vector2();
-
-    // TODO: refactor this
-    private void parserClient(String response) {
-        if (response.startsWith("client:")) {
-            int firstIndex = response.indexOf(":");
-            int lastIndex = response.indexOf(" ");
-            String remoteAddress = response.substring(firstIndex + 1, lastIndex);
-            String action = response.substring(lastIndex + 1);
-
-            Player clientPlayer = searchPlayerByName(remoteAddress);
-
-            if (action.startsWith("createPlayer")) {
-                firstIndex = action.indexOf(":");
-                String namePlayer = action.substring(firstIndex + 1);
-                Gdx.app.log("namePlayer", "namePlayer: " + namePlayer);
-
-                Player player = createPlayer(namePlayer);
-                players.add(player);
-            } else if (action.equals("assignPlayer")) {
-                actualPlayer = players.get(players.size - 1);
-            } else if (server != null) {
-                return;
-            } else if (action.startsWith("position: ")) {
-                if (clientPlayer == null) {
-                    return;
-                }
-
-                String value = action.replace("position: ", "");
-
-                clientPlayer.setPosition(tempVector2.fromString(value));
-            } else if (action.startsWith("radian: ")) {
-                if (clientPlayer == null) {
-                    return;
-                }
-
-                String value = action.replace("radian: ", "");
-                float radian = (float) Double.parseDouble(value);
-                clientPlayer.setViewfinderRadian(radian);
-            } else if (action.equals("fire")) {
-                if (clientPlayer == null) {
-                    return;
-                }
-
-                Bullet bullet = clientPlayer.shot(world);
-                bullets.add(bullet);
-            } else if (action.startsWith("velocity: ")) {
-                if (clientPlayer == null) {
-                    return;
-                }
-
-                String value = action.replace("velocity: ", "");
-                clientPlayer.setVelocity(tempVector2.fromString(value));
-            }
+            server.sendResponseClients(player.getName(), StringUtils.append("position: ", player.getPosition().toString(), "|"));
+            server.sendResponseClients(player.getName(), StringUtils.append("velocity: ", player.getBody().getLinearVelocity().toString(), "|"));
         }
     }
 
