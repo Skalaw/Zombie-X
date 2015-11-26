@@ -36,6 +36,8 @@ public class Client {
     // create a thread that will listen data from incoming server
     private void handleSocket() {
         executorReceiver.execute(new Runnable() {
+            private String lastIncompleteResponse = null;
+
             @Override
             public void run() {
                 SocketHints socketHints = new SocketHints();
@@ -54,7 +56,15 @@ public class Client {
                         try {
                             socket.getInputStream().read(buffer);
                             String str = new String(buffer, "UTF-8");
+                            if (lastIncompleteResponse != null) {
+                                str = lastIncompleteResponse + str;
+                                lastIncompleteResponse = null;
+                            }
                             Array<String> responses = ParserUtils.splitResponse(str);
+                            boolean isComplete = checkLastResponseIsComplete(str);
+                            if (!isComplete) {
+                                lastIncompleteResponse = str.substring(str.lastIndexOf("|"));
+                            }
                             parserClient(responses);
                         } catch (IOException e) {
                             e.printStackTrace();
@@ -119,5 +129,9 @@ public class Client {
                 serverResponseListener.serverVelocityPlayer(remoteAddress, tempVector.fromString(value));
             }
         }
+    }
+
+    private boolean checkLastResponseIsComplete(String response) {
+        return response.endsWith("|");
     }
 }
