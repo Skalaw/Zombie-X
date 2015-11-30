@@ -19,7 +19,10 @@ import static com.asda.zombiex.handlers.B2DVars.PPM;
  * @author Skala
  */
 public class Player extends B2DSprite {
+    public final static float HEALTH_MAX = 100;
     private final static float SHOT_RATE = 0.3f;
+
+    private float health = HEALTH_MAX;
 
     private String name = "";
     private Viewfinder viewfinder;
@@ -53,9 +56,11 @@ public class Player extends B2DSprite {
 
     @Override
     public void render(SpriteBatch sb) {
-        super.render(sb);
+        if (!isDead()) {
+            super.render(sb);
 
-        viewfinder.render(sb);
+            viewfinder.render(sb);
+        }
     }
 
     /**
@@ -148,5 +153,21 @@ public class Player extends B2DSprite {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public float getHealth() {
+        return health;
+    }
+
+    public void setHealth(float health) {
+        this.health = health;
+    }
+
+    public void loseHealth(float loseHealth) {
+        this.health -= loseHealth;
+    }
+
+    public boolean isDead() {
+        return health <= 0;
     }
 }

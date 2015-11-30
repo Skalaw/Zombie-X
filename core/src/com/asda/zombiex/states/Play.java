@@ -193,14 +193,28 @@ public class Play extends GameState {
         }
     }
 
-    private Player createPlayer(String namePlayer) {
+    private RespawnPoints randomRespawnPoint() {
         Random rand = new Random();
         int random = rand.nextInt(respawns.size);
-        RespawnPoints respawnPoints = respawns.get(random);
+        return respawns.get(random);
+    }
+
+    private Player createPlayer(String namePlayer) {
+        RespawnPoints respawnPoints = randomRespawnPoint();
         return createPlayer(namePlayer, respawnPoints.getX(), respawnPoints.getY());
     }
 
     private Player createPlayer(String namePlayer, float posX, float posY) {
+        Body body = createPlayerWorld(posX, posY);
+
+        Player player = new Player(body, players.size);
+        player.setName(namePlayer);
+        body.setUserData(player);
+
+        return player;
+    }
+
+    private Body createPlayerWorld(float posX, float posY) {
         BodyDef bdef = new BodyDef();
         bdef.position.set(posX, posY);
         bdef.type = BodyDef.BodyType.DynamicBody;
@@ -223,11 +237,7 @@ public class Play extends GameState {
         md.mass = 1f;
         body.setMassData(md);
 
-        Player player = new Player(body, players.size);
-        player.setName(namePlayer);
-        body.setUserData(player);
-
-        return player;
+        return body;
     }
 
     @Override
@@ -265,6 +275,7 @@ public class Play extends GameState {
 
         removeBullets();
         removeEndedDestroyBulletEffects();
+        hitPlayer();
 
         for (int i = 0; i < players.size; i++) {
             players.get(i).update(dt);
@@ -305,6 +316,26 @@ public class Play extends GameState {
                 i--;
             }
         }
+    }
+
+    private void hitPlayer() {
+        Array<Player> hitPlayers = cl.getHitPlayer();
+        for (int i = 0; i < hitPlayers.size; i++) {
+            if (hitPlayers.get(i).isDead()) {
+                world.destroyBody(hitPlayers.get(i).getBody());
+
+                backToLife(hitPlayers.get(i));
+            }
+        }
+        hitPlayers.clear();
+    }
+
+    private void backToLife(Player player) {
+        RespawnPoints respawnPoints = randomRespawnPoint();
+        Body body = createPlayerWorld(respawnPoints.getX(), respawnPoints.getY());
+
+        body.setUserData(player);
+        player.setHealth(Player.HEALTH_MAX);
     }
 
     @Override

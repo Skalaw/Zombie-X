@@ -1,5 +1,7 @@
 package com.asda.zombiex.handlers;
 
+import com.asda.zombiex.entities.Bullet;
+import com.asda.zombiex.entities.Player;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.Contact;
 import com.badlogic.gdx.physics.box2d.ContactImpulse;
@@ -13,10 +15,12 @@ import com.badlogic.gdx.utils.Array;
  */
 public class GameContactListener implements ContactListener {
     private Array<Body> bodiesToRemove;
+    private Array<Player> hitPlayer;
 
     public GameContactListener() {
         super();
         bodiesToRemove = new Array<Body>();
+        hitPlayer = new Array<Player>();
     }
 
     @Override
@@ -46,10 +50,18 @@ public class GameContactListener implements ContactListener {
 
         if (fa.getUserData().equals("bullet") && fb.getUserData().equals("player")) {
             bodiesToRemove.add(fa.getBody());
+
+            Player player = (Player) fb.getBody().getUserData();
+            player.loseHealth(Bullet.POWER_BULLET);
+            hitPlayer.add(player);
         }
 
         if (fb.getUserData().equals("bullet") && fa.getUserData().equals("player")) {
             bodiesToRemove.add(fb.getBody());
+
+            Player player = (Player) fa.getBody().getUserData();
+            player.loseHealth(Bullet.POWER_BULLET);
+            hitPlayer.add(player);
         }
     }
 
@@ -75,5 +87,9 @@ public class GameContactListener implements ContactListener {
 
     public Array<Body> getBodiesToRemove() {
         return bodiesToRemove;
+    }
+
+    public Array<Player> getHitPlayer() {
+        return hitPlayer;
     }
 }

@@ -9,6 +9,7 @@ import com.badlogic.gdx.physics.box2d.Body;
  * @author Skala
  */
 public class Bullet extends B2DSprite {
+    public static final float POWER_BULLET = 35;
 
     public Bullet(Body body) {
         super(body);
