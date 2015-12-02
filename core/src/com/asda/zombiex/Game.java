@@ -22,13 +22,15 @@ public class Game extends ApplicationAdapter {
     private GameStateManager gsm;
     public static Content res;
 
+    private SystemInterface systemInterface;
     private String ipHost;
 
     public Game() {
-        this("0.0.0.0");
+        this(null, "0.0.0.0");
     }
 
-    public Game(String ipHost) {
+    public Game(SystemInterface systemInterface, String ipHost) {
+        this.systemInterface = systemInterface;
         this.ipHost = ipHost;
     }
 
@@ -56,6 +58,7 @@ public class Game extends ApplicationAdapter {
         res.loadTexture("images/button_single.png", "button_single");
         res.loadTexture("images/button_server.png", "button_server");
         res.loadTexture("images/button_client.png", "button_client");
+        res.loadTexture("images/button_nickname.png", "button_nickname");
 
         // game
         res.loadTexture("images/jenkins.png", "jenkins");
@@ -96,5 +99,15 @@ public class Game extends ApplicationAdapter {
 
     public String getIpHost() {
         return ipHost;
+    }
+
+    public void setNickname(String nickname) {
+        if (systemInterface != null) {
+            systemInterface.setNickname(nickname);
+        }
+    }
+
+    public String getNickname() {
+        return systemInterface != null ? systemInterface.getNickname() : "";
     }
 }

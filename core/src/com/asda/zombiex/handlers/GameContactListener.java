@@ -2,6 +2,7 @@ package com.asda.zombiex.handlers;
 
 import com.asda.zombiex.entities.Bullet;
 import com.asda.zombiex.entities.Player;
+import com.asda.zombiex.utils.Pair;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.Contact;
 import com.badlogic.gdx.physics.box2d.ContactImpulse;
@@ -15,12 +16,12 @@ import com.badlogic.gdx.utils.Array;
  */
 public class GameContactListener implements ContactListener {
     private Array<Body> bodiesToRemove;
-    private Array<Player> hitPlayer;
+    private Array<Pair<Player, Bullet>> hitPlayer;
 
     public GameContactListener() {
         super();
         bodiesToRemove = new Array<Body>();
-        hitPlayer = new Array<Player>();
+        hitPlayer = new Array<Pair<Player, Bullet>>();
     }
 
     @Override
@@ -52,16 +53,16 @@ public class GameContactListener implements ContactListener {
             bodiesToRemove.add(fa.getBody());
 
             Player player = (Player) fb.getBody().getUserData();
-            player.loseHealth(Bullet.POWER_BULLET);
-            hitPlayer.add(player);
+            Bullet bullet = (Bullet) fa.getBody().getUserData();
+            hitPlayer.add(new Pair<Player, Bullet>(player, bullet));
         }
 
         if (fb.getUserData().equals("bullet") && fa.getUserData().equals("player")) {
             bodiesToRemove.add(fb.getBody());
 
             Player player = (Player) fa.getBody().getUserData();
-            player.loseHealth(Bullet.POWER_BULLET);
-            hitPlayer.add(player);
+            Bullet bullet = (Bullet) fb.getBody().getUserData();
+            hitPlayer.add(new Pair<Player, Bullet>(player, bullet));
         }
     }
 
@@ -89,7 +90,7 @@ public class GameContactListener implements ContactListener {
         return bodiesToRemove;
     }
 
-    public Array<Player> getHitPlayer() {
+    public Array<Pair<Player, Bullet>> getHitPlayer() {
         return hitPlayer;
     }
 }

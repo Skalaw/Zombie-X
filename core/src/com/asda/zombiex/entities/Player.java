@@ -25,6 +25,10 @@ public class Player extends B2DSprite {
     private float health = HEALTH_MAX;
 
     private String name = "";
+    private String nickname = "";
+    private int scoreKilling = 0;
+    private int scoreDead = 0;
+
     private Viewfinder viewfinder;
     private float shotTime = 0f;
     private float actualTime = 0;
@@ -128,7 +132,7 @@ public class Player extends B2DSprite {
         body.createFixture(fdef).setUserData("bullet");
         shape.dispose();
 
-        Bullet bullet = new Bullet(body);
+        Bullet bullet = new Bullet(body, name);
         body.setUserData(bullet);
 
         MassData md = body.getMassData();
@@ -155,6 +159,14 @@ public class Player extends B2DSprite {
         this.name = name;
     }
 
+    public String getNickname() {
+        return nickname;
+    }
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
     public float getHealth() {
         return health;
     }
@@ -169,5 +181,33 @@ public class Player extends B2DSprite {
 
     public boolean isDead() {
         return health <= 0;
+    }
+
+    public int getScoreKilling() {
+        return scoreKilling;
+    }
+
+    public void setScoreKilling(int scoreKilling) {
+        this.scoreKilling = scoreKilling;
+    }
+
+    public void incScoreKilling() {
+        scoreKilling++;
+    }
+
+    public void decScoreKilling() {
+        scoreKilling--;
+    }
+
+    public int getScoreDead() {
+        return scoreDead;
+    }
+
+    public void setScoreDead(int scoreDead) {
+        this.scoreDead = scoreDead;
+    }
+
+    public void incScoreDead() {
+        scoreDead++;
     }
 }

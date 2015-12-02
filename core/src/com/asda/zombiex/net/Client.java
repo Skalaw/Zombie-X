@@ -42,6 +42,7 @@ public class Client {
             public void run() {
                 SocketHints socketHints = new SocketHints();
                 socket = Gdx.net.newClientSocket(Net.Protocol.TCP, host, Server.PORT, socketHints); // "127.0.0.1" - localhost
+                serverResponseListener.serverStartClient();
 
                 while (true) {
                     int available = 0;
@@ -127,6 +128,17 @@ public class Client {
             } else if (action.startsWith("velocity: ")) {
                 String value = action.replace("velocity: ", "");
                 serverResponseListener.serverVelocityPlayer(remoteAddress, tempVector.fromString(value));
+            } else if (action.startsWith("nickname:")) {
+                firstIndex = action.indexOf(":");
+                lastIndex = action.indexOf(" player:");
+                String nickname = action.substring(firstIndex + 1, lastIndex);
+                String playerName = action.substring(lastIndex + 8);
+
+                serverResponseListener.setNickname(playerName, nickname);
+            } else if (action.startsWith("initNickname:")) {
+                firstIndex = action.indexOf(":");
+                String nickname = action.substring(firstIndex + 1);
+                serverResponseListener.setNickname(remoteAddress, nickname);
             }
         }
     }

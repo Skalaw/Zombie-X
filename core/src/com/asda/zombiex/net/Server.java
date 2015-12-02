@@ -150,6 +150,10 @@ public class Server {
             if (clientRequestListener.secondButtonClicked(remoteAddress)) {
                 sendResponseClients(remoteAddress, request);
             }
+        } else if (requestParse.startsWith("nickname:")) {
+            sendResponseClients(remoteAddress, request);
+        } else if (requestParse.startsWith("initNickname")) {
+            sendResponseClients(remoteAddress, request);
         }
     }
 }

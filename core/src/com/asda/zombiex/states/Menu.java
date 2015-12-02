@@ -18,16 +18,19 @@ public class Menu extends GameState {
     private Texture buttonSingle; // TODO: Create class for buttons
     private Texture buttonServer;
     private Texture buttonClient;
+    private Texture buttonNickname;
 
     private float buttonX;
     private float textIpY;
     private float buttonSingleY;
     private float buttonServerY;
     private float buttonClientY;
+    private float buttonNicknameY;
 
     private Vector3 vec;
     private BitmapFont font;
     private String connectIp = "";
+    public static String nickname = ""; // TODO: it look bad
 
     public Menu(GameStateManager gsm) {
         super(gsm);
@@ -35,18 +38,22 @@ public class Menu extends GameState {
         buttonSingle = Game.res.getTexture("button_single");
         buttonServer = Game.res.getTexture("button_server");
         buttonClient = Game.res.getTexture("button_client");
+        buttonNickname = Game.res.getTexture("button_nickname");
 
         buttonX = (Game.V_WIDTH - buttonSingle.getWidth()) / 2f;
         textIpY = Game.V_HEIGHT;
         buttonSingleY = Game.V_HEIGHT * 0.75f;
         buttonServerY = buttonSingleY - buttonSingle.getHeight() * 1.5f;
         buttonClientY = buttonServerY - buttonServer.getHeight() * 1.5f;
+        buttonNicknameY = buttonClientY - buttonServer.getHeight() * 1.5f;
 
         cam.setToOrtho(false, Game.V_WIDTH, Game.V_HEIGHT);
 
         vec = new Vector3();
         font = new BitmapFont();
         font.setColor(0f, 0f, 0f, 1f);
+
+        nickname = game.getNickname();
     }
 
     @Override
@@ -83,6 +90,12 @@ public class Menu extends GameState {
                     gsm.setClient(connectIp);
                 }
             }
+
+            if (vec.x > buttonX && vec.x < buttonX + buttonNickname.getWidth()) {
+                if (vec.y > buttonNicknameY && vec.y < buttonNicknameY + buttonNickname.getHeight()) {
+                    showPopupChangeNickname();
+                }
+            }
         }
     }
 
@@ -99,12 +112,13 @@ public class Menu extends GameState {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         sb.begin();
 
-        String text = "Host ip: " + game.getIpHost() + " client: " + connectIp;
+        String text = "Host ip: " + game.getIpHost() + " client: " + connectIp + "\nNickName: " + nickname;
 
         font.draw(sb, text, 0, textIpY);
         sb.draw(buttonSingle, buttonX, buttonSingleY);
         sb.draw(buttonServer, buttonX, buttonServerY);
         sb.draw(buttonClient, buttonX, buttonClientY);
+        sb.draw(buttonNickname, buttonX, buttonNicknameY);
         sb.end();
     }
 
@@ -125,5 +139,20 @@ public class Menu extends GameState {
 
             }
         }, "Please enter Ip", "", "Ip address");
+    }
+
+    private void showPopupChangeNickname() {
+        Gdx.input.getTextInput(new Input.TextInputListener() {
+            @Override
+            public void input(String text) {
+                nickname = text;
+                game.setNickname(nickname);
+            }
+
+            @Override
+            public void canceled() {
+
+            }
+        }, "Please enter Nickname", "", "Nickname");
     }
 }

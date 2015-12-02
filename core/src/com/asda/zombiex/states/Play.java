@@ -15,6 +15,7 @@ import com.asda.zombiex.net.ClientRequestListener;
 import com.asda.zombiex.net.Server;
 import com.asda.zombiex.net.ServerCallback;
 import com.asda.zombiex.net.ServerResponseListener;
+import com.asda.zombiex.utils.Pair;
 import com.asda.zombiex.utils.StringUtils;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
@@ -199,16 +200,17 @@ public class Play extends GameState {
         return respawns.get(random);
     }
 
-    private Player createPlayer(String namePlayer) {
+    private Player createPlayer(String namePlayer, String nickname) {
         RespawnPoints respawnPoints = randomRespawnPoint();
-        return createPlayer(namePlayer, respawnPoints.getX(), respawnPoints.getY());
+        return createPlayer(namePlayer, nickname, respawnPoints.getX(), respawnPoints.getY());
     }
 
-    private Player createPlayer(String namePlayer, float posX, float posY) {
+    private Player createPlayer(String namePlayer, String nickname, float posX, float posY) {
         Body body = createPlayerWorld(posX, posY);
 
         Player player = new Player(body, players.size);
         player.setName(namePlayer);
+        player.setNickname(nickname);
         body.setUserData(player);
 
         return player;
@@ -273,9 +275,9 @@ public class Play extends GameState {
         handleInput();
         world.step(Game.STEP, 1, 1);
 
+        hitPlayer();
         removeBullets();
         removeEndedDestroyBulletEffects();
-        hitPlayer();
 
         for (int i = 0; i < players.size; i++) {
             players.get(i).update(dt);
@@ -319,12 +321,30 @@ public class Play extends GameState {
     }
 
     private void hitPlayer() {
-        Array<Player> hitPlayers = cl.getHitPlayer();
-        for (int i = 0; i < hitPlayers.size; i++) {
-            if (hitPlayers.get(i).isDead()) {
-                world.destroyBody(hitPlayers.get(i).getBody());
+        Array<Pair<Player, Bullet>> hitPlayers = cl.getHitPlayer();
 
-                backToLife(hitPlayers.get(i));
+        for (int i = 0; i < hitPlayers.size; i++) {
+            Player hitPlayer = hitPlayers.get(i).getKey();
+            Bullet bullet = hitPlayers.get(i).getValue();
+
+            hitPlayer.loseHealth(Bullet.POWER_BULLET);
+
+            if (hitPlayer.isDead()) {
+                hitPlayer.incScoreDead();
+
+                Player ownerBullet = searchPlayerByName(bullet.getNameOwnerBullet());
+                if (ownerBullet != null) {
+                    if (ownerBullet == hitPlayer) {
+                        ownerBullet.decScoreKilling();
+                    } else {
+                        ownerBullet.incScoreKilling();
+                    }
+                }
+
+                world.destroyBody(hitPlayer.getBody());
+                backToLife(hitPlayer);
+
+                controllerPlayer.updateScore(players);
             }
         }
         hitPlayers.clear();
@@ -382,8 +402,9 @@ public class Play extends GameState {
     }
 
     public void setSinglePlayer() {
-        Player player = createPlayer("SinglePlayer");
+        Player player = createPlayer("SinglePlayer", "SinglePlayer");
         players.add(player);
+        controllerPlayer.updateScore(players);
         actualPlayer = player;
 
         handleInputListener = new HandleInputListener() {
@@ -463,7 +484,9 @@ public class Play extends GameState {
                 // TODO: here should be send info actually game (in while join to game)
 
                 for (int i = 0; i < players.size; i++) {
-                    server.sendResponseClient(remoteAddress, StringUtils.append("createPlayer:", players.get(i).getName(), "|"));
+                    Player player = players.get(i);
+                    server.sendResponseClient(remoteAddress, StringUtils.append("createPlayer:", player.getName(), "|"));
+                    server.sendResponseClient(remoteAddress, "nickname:" + player.getNickname() + " player:" + player.getName() + "|");
                 }
             }
         }, clientRequestListener);
@@ -472,9 +495,15 @@ public class Play extends GameState {
     public void setClient(String connectIp) {
         ServerResponseListener serverResponseListener = new ServerResponseListener() {
             @Override
+            public void serverStartClient() {
+                client.sendToServer("initNickname:" + Menu.nickname + "|");
+            }
+
+            @Override
             public void serverCreatePlayer(String namePlayer) {
-                Player player = createPlayer(namePlayer);
+                Player player = createPlayer(namePlayer, "");
                 players.add(player);
+                controllerPlayer.updateScore(players);
             }
 
             @Override
@@ -517,6 +546,13 @@ public class Play extends GameState {
                 }
                 Player clientPlayer = searchPlayerByName(namePlayer);
                 clientPlayer.setVelocity(value);
+            }
+
+            @Override
+            public void setNickname(String namePlayer, String nickname) {
+                Player clientPlayer = searchPlayerByName(namePlayer);
+                clientPlayer.setNickname(nickname);
+                controllerPlayer.updateScore(players);
             }
         };
 
