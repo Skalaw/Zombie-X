@@ -30,7 +30,7 @@ public class ControllerPlayer {
     private int buttonFireY;
 
     private BitmapFont font;
-    private String leaderBoard = "";
+    private String leaderboard = "";
 
     public ControllerPlayer(OrthographicCamera cam) {
         this.cam = cam;
@@ -54,18 +54,28 @@ public class ControllerPlayer {
         sb.draw(buttonAnalog, 0, 0);
         sb.draw(buttonJump, buttonJumpX, 0);
         sb.draw(buttonFire, buttonJumpX, buttonFireY);
-        font.draw(sb, "FPS: " + Gdx.graphics.getFramesPerSecond() + leaderBoard, 1, Game.V_HEIGHT);
+        font.draw(sb, "FPS: " + Gdx.graphics.getFramesPerSecond() + leaderboard, 1, Game.V_HEIGHT);
         sb.end();
 
         sb.setColor(c.r, c.g, c.b, 1f);
     }
 
     public void updateScore(Array<Player> players) {
-        leaderBoard = "  Player Kill Dead";
+        leaderboard = "  Player Kill Dead";
         for (int i = 0; i < players.size; i++) {
             Player player = players.get(i);
-            leaderBoard += "\n" + player.getNickname() + "   " + player.getScoreKilling() + ":" + player.getScoreDead();
+            leaderboard += "\n" + player.getNickname() + "   " + player.getScoreKilling() + ":" + player.getScoreDead();
         }
+    }
+
+    public String getParseScore(Array<Player> players) {
+        String output = "leaderboard:";
+        for (int i = 0; i < players.size; i++) {
+            Player player = players.get(i);
+            output += " ip:" + player.getName() + " score:" + player.getScoreKilling() + ":" + player.getScoreDead();
+        }
+        output += "|";
+        return output;
     }
 
     public boolean isButtonJumpClicked() {

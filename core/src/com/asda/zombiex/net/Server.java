@@ -91,6 +91,10 @@ public class Server {
 
     public void sendResponseClients(String remoteAddress, String simpleTask) {
         simpleTask = StringUtils.append("client:", remoteAddress, " ", simpleTask);
+        sendResponseClients(simpleTask);
+    }
+
+    public void sendResponseClients(String simpleTask) {
         sendDataSockets(simpleTask.getBytes());
     }
 
@@ -154,6 +158,8 @@ public class Server {
             sendResponseClients(remoteAddress, request);
         } else if (requestParse.startsWith("initNickname")) {
             sendResponseClients(remoteAddress, request);
+        } else {
+            Gdx.app.log("SERVER", "cos nie przewidywalnego: " + request);
         }
     }
 }

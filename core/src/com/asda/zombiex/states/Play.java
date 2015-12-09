@@ -273,7 +273,7 @@ public class Play extends GameState {
     @Override
     public void update(float dt) {
         handleInput();
-        world.step(Game.STEP, 1, 1);
+        world.step(Game.STEP, 6, 2);
 
         hitPlayer();
         removeBullets();
@@ -322,6 +322,10 @@ public class Play extends GameState {
 
     private void hitPlayer() {
         Array<Pair<Player, Bullet>> hitPlayers = cl.getHitPlayer();
+        if (server == null && client != null) {
+            hitPlayers.clear();
+            return;
+        }
 
         for (int i = 0; i < hitPlayers.size; i++) {
             Player hitPlayer = hitPlayers.get(i).getKey();
@@ -345,6 +349,11 @@ public class Play extends GameState {
                 backToLife(hitPlayer);
 
                 controllerPlayer.updateScore(players);
+
+                if (server != null) {
+                    String leaderboardParse = controllerPlayer.getParseScore(players);
+                    server.sendResponseClients(leaderboardParse);
+                }
             }
         }
         hitPlayers.clear();
@@ -552,6 +561,22 @@ public class Play extends GameState {
             public void setNickname(String namePlayer, String nickname) {
                 Player clientPlayer = searchPlayerByName(namePlayer);
                 clientPlayer.setNickname(nickname);
+                controllerPlayer.updateScore(players);
+            }
+
+            @Override
+            public void setLeaderboard(String namePlayer, int scoreKill, int scoreDead) {
+                if (server != null) {
+                    return;
+                }
+
+                Player clientPlayer = searchPlayerByName(namePlayer);
+                clientPlayer.setScoreKilling(scoreKill);
+                clientPlayer.setScoreDead(scoreDead);
+            }
+
+            @Override
+            public void updateLeaderboard() {
                 controllerPlayer.updateScore(players);
             }
         };

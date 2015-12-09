@@ -13,6 +13,8 @@ Video version 0.0.1: https://www.youtube.com/watch?v=0pmbpqHRtLc
 - fixing hide navigation button in Nexus 4
 - delete Button change player
 - random respawn points
+- nickname for players
+- scoreboard
 
 ### 0.0.1
 - init version

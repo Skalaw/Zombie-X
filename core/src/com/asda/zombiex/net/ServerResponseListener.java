@@ -14,4 +14,6 @@ public interface ServerResponseListener {
     void serverShot(String namePlayer);
     void serverVelocityPlayer(String namePlayer, Vector2 value);
     void setNickname(String namePlayer, String nickname);
+    void setLeaderboard(String namePlayer, int scoreKill, int scoreDead);
+    void updateLeaderboard();
 }

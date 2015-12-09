@@ -140,6 +140,33 @@ public class Client {
                 String nickname = action.substring(firstIndex + 1);
                 serverResponseListener.setNickname(remoteAddress, nickname);
             }
+        } else {
+            if (response.startsWith("leaderboard:")) {
+
+                while (response.length() != 0) {
+                    int firstIndex = response.indexOf(" ip:");
+                    int lastIndex = response.indexOf(" score:");
+                    String name = response.substring(firstIndex + 4, lastIndex);
+
+                    firstIndex = lastIndex + 7;
+                    lastIndex = response.indexOf(":", firstIndex);
+                    String stringKill = response.substring(firstIndex, lastIndex);
+                    int kill = Integer.parseInt(stringKill);
+
+                    firstIndex = ++lastIndex;
+                    lastIndex = response.indexOf(" ", firstIndex);
+                    if (lastIndex < 0) {
+                        lastIndex = response.length();
+                    }
+                    String stringDead = response.substring(firstIndex, lastIndex);
+                    int dead = Integer.parseInt(stringDead);
+
+                    response = response.substring(lastIndex);
+                    serverResponseListener.setLeaderboard(name, kill, dead);
+                }
+
+                serverResponseListener.updateLeaderboard();
+            }
         }
     }
 
