@@ -29,7 +29,7 @@ public class Menu extends GameState {
 
     private Vector3 vec;
     private BitmapFont font;
-    private String connectIp = "";
+    private String connectIp = "192.168.0.150";
     public static String nickname = ""; // TODO: it look bad
 
     public Menu(GameStateManager gsm) {
